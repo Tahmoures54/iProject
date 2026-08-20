@@ -100,7 +100,8 @@
         {% else %}
           <div class="flex items-center gap-3">
             <a href="{{ url_for('auth.login') }}" class="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 no-underline">ورود</a>
-            <a href="{{ url_for('auth.signup') }}" class="bg-brand-600 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-500/20 no-underline">ثبت‌نام</a>
+            <!-- اصلاح: auth.signup به auth.register تغییر یافت -->
+            <a href="{{ url_for('auth.register') }}" class="bg-brand-600 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-brand-700 transition shadow-lg shadow-brand-500/20 no-underline">ثبت‌نام</a>
           </div>
         {% endif %}
       </div>
@@ -170,7 +171,7 @@
   <!-- Footer -->
   <footer class="bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 py-6 mt-auto transition-colors duration-300">
     <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <p class="text-slate-400 dark:text-slate-500 text-sm">© {{ config.get('APP_YEAR', '۱۴۰۳') }} — پنل مدیریت هوشمند پروژه (iProject)</p>
+      <p class="text-slate-400 dark:text-slate-500 text-sm">© {{ config.get('APP_YEAR', '۱۵۰۳') }} — پنل مدیریت هوشمند پروژه (iProject)</p>
       <div class="flex gap-6 text-sm font-medium">
         <a href="{{ url_for('main.help') }}" class="text-slate-400 dark:text-slate-500 hover:text-brand-600 no-underline">راهنما</a>
         <a href="{{ url_for('main.terms_of_service') }}" class="text-slate-400 dark:text-slate-500 hover:text-brand-600 no-underline">قوانین</a>
