@@ -2,10 +2,10 @@
 <section class="hero" aria-label="بخش اصلی">
     <div class="hero-slider" aria-hidden="true">
         {% set hero_images = [
-            {'src': url_for('static', filename='img/hero/slide-1.jpg'), 'alt': 'مدیریت پروژه'},
-            {'src': url_for('static', filename='img/hero/slide-2.jpg'), 'alt': 'کار تیمی'},
-            {'src': url_for('static', filename='img/hero/slide-3.jpg'), 'alt': 'گزارش‌گیری'},
-            {'src': url_for('static', filename='img/hero/slide-4.jpg'), 'alt': 'موفقیت'}
+            {'src': url_for('static', filename='img/hero/slide-1.jpg'), 'alt': 'کنترل پروژه حرفه‌ای'},
+            {'src': url_for('static', filename='img/hero/slide-2.jpg'), 'alt': 'مدیریت تیم پروژه'},
+            {'src': url_for('static', filename='img/hero/slide-3.jpg'), 'alt': 'گزارش‌گیری و EVM'},
+            {'src': url_for('static', filename='img/hero/slide-4.jpg'), 'alt': 'موفقیت پروژه‌ها'}
         ] %}
         {% for img in hero_images %}
         <div class="hero-slide {% if loop.first %}active{% endif %}" data-slide="{{ loop.index0 }}">
@@ -19,9 +19,9 @@
     <div class="hero-overlay" aria-hidden="true"></div>
 
     <div class="hero-content">
-        <span class="hero-badge">🚀 نسخه جدید ۲۰۲۶</span>
-        <h1>مدیریت پروژه را با <span class="brand">iProject</span> هوشمند کنید</h1>
-        <p>پلتفرم جامع برای تیم‌های مهندسی و بازرگانی؛ از ثبت قراردادها تا پایش پیشرفت</p>
+        <span class="hero-badge">استانداردهای جهانی کنترل پروژه • ۲۰۲۶</span>
+        <h1>کنترل پروژه را با <span class="brand">iProject</span> حرفه‌ای کنید</h1>
+        <p>سامانه یکپارچه PMS + CBS با پشتیبانی کامل از Earned Value Management، ساختار شکست هزینه و مدیریت قرارداد برای شرکت‌های مهندسی و پیمانکاری</p>
 
         <div class="cta-buttons">
             {% if not current_user.is_authenticated %}
@@ -30,8 +30,8 @@
                     شروع رایگان
                 </a>
                 <a href="#benefits" class="button outline">
-                    <i class="fas fa-info-circle" aria-hidden="true"></i>
-                    مشاهده ویژگی‌ها
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    مشاهده قابلیت‌ها
                 </a>
             {% else %}
                 <a href="{{ url_for('main.dashboard') }}" class="button">

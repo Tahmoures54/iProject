@@ -1,12 +1,13 @@
 {# Path: pms_app/templates/main/partials/_how_it_works.html #}
 <section class="how-it-works fade-in-up" aria-label="نحوه استفاده">
-    <h2>مسیر موفقیت در سه گام</h2>
+    <h2>از تعریف تا کنترل در چهار گام</h2>
 
     <div class="steps">
         {% set steps = [
-            {'icon': 'fa-user-plus',        'title': '۱. ثبت‌نام کنید',   'desc': 'در کمتر از ۱ دقیقه حساب بسازید'},
-            {'icon': 'fa-project-diagram',  'title': '۲. پروژه بسازید',  'desc': 'پروژه و قرارداد خود را تعریف کنید'},
-            {'icon': 'fa-rocket',           'title': '۳. مدیریت کنید',   'desc': 'پیشرفت را پایش و گزارش بگیرید'}
+            {'icon': 'fa-building',         'title': '۱. شرکت و پروژه',     'desc': 'شرکت خود را تعریف کنید و پروژه‌ها را با WBS اولیه بسازید'},
+            {'icon': 'fa-file-signature',   'title': '۲. قرارداد و CBS',    'desc': 'قراردادها و ساختار شکست هزینه (CBS) را ثبت و آیتم‌ها را وارد کنید'},
+            {'icon': 'fa-tasks',            'title': '۳. پیشرفت و EVM',     'desc': 'پیشرفت فیزیکی را ثبت کنید و شاخص‌های ارزش کسب‌شده را ببینید'},
+            {'icon': 'fa-chart-line',       'title': '۴. کنترل و گزارش',    'desc': 'انحرافات را تحلیل کنید و گزارش‌های مدیریتی تهیه نمایید'}
         ] %}
 
         {% for s in steps %}

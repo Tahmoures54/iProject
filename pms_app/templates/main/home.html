@@ -1,24 +1,24 @@
 {# Path: pms_app/templates/main/home.html #}
 {% extends "base.html" %}
 
-{% block title %}iProject | مدیریت هوشمند پروژه‌ها{% endblock %}
+{% block title %}iProject | سامانه هوشمند کنترل پروژه و CBS{% endblock %}
 
 {% block meta %}
-    <meta name="description" content="iProject پلتفرم جامع مدیریت پروژه، قراردادها، بازارچه مصالح و همکاری تیمی برای شرکت‌های مهندسی و بازرگانی.">
-    <meta name="keywords" content="مدیریت پروژه, قرارداد, بازارچه مصالح, iProject, مدیریت انبار, صورت وضعیت">
+    <meta name="description" content="iProject سامانه تخصصی مدیریت و کنترل پروژه با پشتیبانی از WBS، CBS، Earned Value Management (EVM)، مدیریت قرارداد و صورت‌وضعیت برای شرکت‌های مهندسی و پیمانکاری.">
+    <meta name="keywords" content="کنترل پروژه, مدیریت پروژه, CBS, WBS, EVM, صورت وضعیت, مدیریت قرارداد, iProject, PMS, Cost Breakdown Structure">
     <meta name="author" content="iProject Team">
 
     {# Open Graph #}
-    <meta property="og:title" content="iProject | مدیریت هوشمند پروژه‌ها">
-    <meta property="og:description" content="پلتفرم جامع مدیریت پروژه و قرارداد برای تیم‌های مهندسی و بازرگانی.">
+    <meta property="og:title" content="iProject | سامانه هوشمند کنترل پروژه و CBS">
+    <meta property="og:description" content="پلتفرم حرفه‌ای کنترل پروژه با EVM، CBS، مدیریت قرارداد و گزارش‌های لحظه‌ای برای تیم‌های مهندسی و پیمانکاری.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
     <meta property="og:url" content="{{ request.url }}">
 
     {# Twitter Card #}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="iProject | مدیریت هوشمند پروژه‌ها">
-    <meta name="twitter:description" content="پلتفرم جامع مدیریت پروژه و قرارداد.">
+    <meta name="twitter:title" content="iProject | سامانه هوشمند کنترل پروژه و CBS">
+    <meta name="twitter:description" content="کنترل یکپارچه پروژه با استانداردهای روز دنیا (EVM, CBS, WBS).">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
 {% endblock %}
 
@@ -34,16 +34,16 @@
     {% include 'main/partials/_benefits.html' %}
 
     <section class="integrated-management fade-in-up">
-        <h2>قدرت مدیریت یکپارچه و آنلاین پروژه</h2>
-        <p>iProject روش مدیریت پروژه را متحول می‌کند. با پلتفرم ما، شما می‌توانید:</p>
+        <h2>کنترل پروژه به سبک استانداردهای روز دنیا</h2>
+        <p>iProject بر اساس اصول مدرن Project Controls طراحی شده و امکانات زیر را یکپارچه ارائه می‌دهد:</p>
         <ul>
-            <li>یکپارچگی کامل فرآیندها از درخواست خرید تا تحویل.</li>
-            <li>داشبوردهای آنلاین برای تصمیم‌گیری لحظه‌ای.</li>
-            <li>کاهش خطاها و تأخیرها با گردش کار خودکار.</li>
-            <li>راهکارهای مقیاس‌پذیر برای تیم‌های کوچک تا بزرگ.</li>
-            <li>فروش مصالح مازاد یا خرید کمبود از شرکت‌های دیگر درون پلتفرم.</li>
+            <li>ساختار شکست کار (WBS) و ساختار شکست هزینه (CBS) به‌صورت سلسله‌مراتبی</li>
+            <li>مدیریت ارزش کسب‌شده (Earned Value Management) با شاخص‌های CPI، SPI، EAC و TCPI</li>
+            <li>کنترل قرارداد، صورت‌وضعیت و آیتم‌های قراردادی با Import/Export اکسل</li>
+            <li>داشبوردهای لحظه‌ای پیشرفت فیزیکی، زمانی و مالی</li>
+            <li>نقش‌محوری دقیق (RBAC) و Multi-tenancy برای شرکت‌ها و پیمانکاران</li>
         </ul>
-        <p>به آینده مدیریت پروژه بپیوندید؛ ساده، هوشمند و متصل!</p>
+        <p>از برنامه‌ریزی تا اجرا و کنترل؛ همه چیز در یک پلتفرم حرفه‌ای.</p>
     </section>
 
     {% include 'main/partials/_how_it_works.html' %}
