@@ -6,12 +6,13 @@ from wtforms import (
     StringField,
     TextAreaField,
     SelectField,
-    DateField,
     DecimalField,
     SubmitField,
     HiddenField,
 )
-from wtforms.validators import DataRequired, Optional, Length, NumberRange, ValidationError
+from wtforms.validators import DataRequired, Optional, Length, NumberRange
+
+from pms_app.utils.fields import JalaliDateField
 
 
 class ProjectForm(FlaskForm):
@@ -36,8 +37,8 @@ class ProjectForm(FlaskForm):
         choices=[("IRR", "ریال"), ("USD", "دلار"), ("EUR", "یورو")],
         default="IRR",
     )
-    start_date = DateField("تاریخ شروع", validators=[Optional()], format="%Y-%m-%d")
-    finish_date = DateField("تاریخ پایان", validators=[Optional()], format="%Y-%m-%d")
+    start_date = JalaliDateField("تاریخ شروع (خورشیدی)", validators=[Optional()])
+    finish_date = JalaliDateField("تاریخ پایان (خورشیدی)", validators=[Optional()])
     status = SelectField(
         "وضعیت",
         choices=[
@@ -98,7 +99,7 @@ class ActionItemForm(FlaskForm):
         default="medium",
     )
     assignee_id = SelectField("مسئول", coerce=int, validators=[Optional()], choices=[])
-    due_date = DateField("مهلت", validators=[Optional()], format="%Y-%m-%d")
+    due_date = JalaliDateField("مهلت (خورشیدی)", validators=[Optional()])
     progress_percent = DecimalField(
         "پیشرفت (%)",
         validators=[Optional(), NumberRange(min=0, max=100)],
@@ -115,8 +116,8 @@ class ActionItemForm(FlaskForm):
 
 class ScheduleItemQuickForm(FlaskForm):
     item_id = HiddenField()
-    baseline_start_date = DateField("شروع برنامه", validators=[Optional()], format="%Y-%m-%d")
-    baseline_end_date = DateField("پایان برنامه", validators=[Optional()], format="%Y-%m-%d")
+    baseline_start_date = JalaliDateField("شروع برنامه", validators=[Optional()])
+    baseline_end_date = JalaliDateField("پایان برنامه", validators=[Optional()])
     actual_progress_percentage = DecimalField(
         "پیشرفت (%)",
         validators=[Optional(), NumberRange(min=0, max=100)],
