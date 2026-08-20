@@ -13,14 +13,12 @@ from pms_app.models.contract import Contract
 from pms_app.models.project import Project
 from pms_app.utils.entitlements import can_create
 from pms_app.utils.security import ensure_rbac_seed, is_owner, permission_required
+from pms_app.utils.progress import contract_progress
 
 from . import bp
 from .forms import ContractForm
 
 
-# -------------------------------------------------
-# Multi-tenant helpers (company scoping)
-# -------------------------------------------------
 def _current_company_id() -> Optional[int]:
     cid = getattr(current_user, "company_id", None)
     try:
@@ -40,27 +38,18 @@ def _get_project_or_404(project_id: int) -> Project:
     project = db.session.get(Project, int(project_id))
     if not project:
         abort(404)
-
-    # مالک پلتفرم: همه پروژه‌ها
     if is_owner(current_user):
         return project
-
-    # کاربر شرکتی باید company_id داشته باشد
     cid = _current_company_id()
     if cid is None:
         abort(403)
-
-    # اگر Project.company_id دارید (سناریوی جدید)
     if hasattr(Project, "company_id"):
         if int(getattr(project, "company_id") or 0) != int(cid):
             abort(404)
         return project
-
-    # fallback قدیمی (کم‌امن‌تر)
     for attr in ("user_id", "owner_id", "created_by_id"):
         if hasattr(Project, attr) and int(getattr(project, attr) or 0) == int(current_user.id):
             return project
-
     abort(404)
 
 
@@ -68,50 +57,34 @@ def _get_contract_or_404(contract_id: int) -> Contract:
     contract = db.session.get(Contract, int(contract_id))
     if not contract:
         abort(404)
-
     if is_owner(current_user):
         return contract
-
     cid = _current_company_id()
     if cid is None:
         abort(403)
-
-    # اگر Contract.company_id دارید (سناریوی جدید)
     if hasattr(Contract, "company_id"):
         if int(getattr(contract, "company_id") or 0) != int(cid):
             abort(404)
         return contract
-
-    # fallback: از طریق پروژه scope کنیم
     project = db.session.get(Project, int(getattr(contract, "project_id") or 0))
     if not project:
         abort(404)
-    _get_project_or_404(int(project.id))  # اگر خارج scope باشد 404 می‌دهد
+    _get_project_or_404(int(project.id))
     return contract
 
 
 def _contracts_query_scoped(project_id: int):
-    """
-    Query قراردادهای یک پروژه در محدوده شرکت
-    """
     q = Contract.query.filter(Contract.project_id == int(project_id))
-
     if is_owner(current_user):
         return q
-
     cid = _current_company_id()
     if cid is None:
         abort(403)
-
     if hasattr(Contract, "company_id"):
         q = q.filter(Contract.company_id == int(cid))
-
     return q
 
 
-# -------------------------------------------------
-# Guard
-# -------------------------------------------------
 @bp.before_request
 @login_required
 def _contracts_guard():
@@ -122,17 +95,11 @@ def _contracts_guard():
     return None
 
 
-# -------------------------------------------------
-# Routes
-# -------------------------------------------------
 @bp.route("/contracts")
 @bp.route("/projects/<int:project_id>/contracts")
 @login_required
 @permission_required("contracts.read")
 def contracts(project_id: int | None = None):
-    """
-    لیست قراردادها برای یک پروژه.
-    """
     if project_id is None:
         project_id = request.args.get("project_id", type=int)
 
@@ -151,11 +118,23 @@ def contracts(project_id: int | None = None):
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
+    progress_map = {}
+    for c in pagination.items:
+        try:
+            progress_map[c.id] = contract_progress(c)
+        except Exception:
+            progress_map[c.id] = {
+                "overall_pct": 0,
+                "item_count": 0,
+                "disciplines": [],
+            }
+
     return render_template(
         "contracts/contracts.html",
         project=project,
         contracts=pagination.items,
         pagination=pagination,
+        progress_map=progress_map,
     )
 
 
@@ -164,10 +143,8 @@ def contracts(project_id: int | None = None):
 @permission_required("contracts.write")
 def contract_new(project_id: int):
     project = _get_project_or_404(int(project_id))
-
     form = ContractForm()
     if form.validate_on_submit():
-        # محدودیت پلن (company-aware داخل entitlements.py)
         ok, msg, upgrade_url = can_create("contract", int(current_user.id))
         if not ok:
             flash(msg or "محدودیت پلن اجازه ایجاد قرارداد جدید را نمی‌دهد.", "warning")
@@ -188,10 +165,8 @@ def contract_new(project_id: int):
             status=form.status.data,
             remarks=form.remarks.data or None,
         )
-
-        # multi-tenant: company_id را از پروژه ست کن
         if hasattr(Contract, "company_id") and hasattr(Project, "company_id"):
-            contract.company_id = int(getattr(project, "company_id"))  # type: ignore[assignment]
+            contract.company_id = int(getattr(project, "company_id"))
 
         db.session.add(contract)
         try:
@@ -220,7 +195,6 @@ def contract_new(project_id: int):
 def contract_edit(contract_id: int):
     contract = _get_contract_or_404(int(contract_id))
     project = _get_project_or_404(int(getattr(contract, "project_id")))
-
     form = ContractForm(obj=contract)
     if form.validate_on_submit():
         contract.contract_number = (form.contract_number.data or "").strip()
@@ -235,14 +209,10 @@ def contract_edit(contract_id: int):
         contract.finish_date = form.finish_date.data
         contract.status = form.status.data
         contract.remarks = form.remarks.data or None
-
         if hasattr(contract, "updated_at"):
             contract.updated_at = datetime.utcnow()
-
-        # اگر company_id خالی بود، یکبار از پروژه پرش کن
         if hasattr(Contract, "company_id") and getattr(contract, "company_id", None) is None and hasattr(project, "company_id"):
-            contract.company_id = int(getattr(project, "company_id"))  # type: ignore[assignment]
-
+            contract.company_id = int(getattr(project, "company_id"))
         try:
             db.session.commit()
             flash("قرارداد بروزرسانی شد.", "success")
@@ -270,7 +240,6 @@ def contract_edit(contract_id: int):
 def contract_delete(contract_id: int):
     contract = _get_contract_or_404(int(contract_id))
     project_id = int(getattr(contract, "project_id"))
-
     try:
         db.session.delete(contract)
         db.session.commit()
@@ -279,5 +248,4 @@ def contract_delete(contract_id: int):
         db.session.rollback()
         current_app.logger.exception("DB error while deleting contract")
         flash("خطای دیتابیس هنگام حذف قرارداد.", "danger")
-
     return redirect(url_for("contracts.contracts", project_id=project_id))
