@@ -1,7 +1,8 @@
 # Path: pms_app/utils/evm.py
 """
-Earned Value Management (EVM) calculation utilities + S-Curve generator.
-Supports Jalali (Solar) labels for charts.
+Earned Value Management (EVM) + S-Curve.
+PV priority: planned_progress_percentage → linear baseline dates.
+BAC: adjusted_amount → original_amount → qty×unit_price (via item.bac).
 """
 from __future__ import annotations
 
@@ -76,6 +77,7 @@ def calculate_item_evm(
     bac: Number,
     progress_percent: Number,
     actual_cost: Number = None,
+    planned_progress_percent: Number = None,
     baseline_start: Optional[date] = None,
     baseline_end: Optional[date] = None,
     as_of: Optional[date] = None,
@@ -87,13 +89,16 @@ def calculate_item_evm(
 
     ev = _q(bac_d * (progress / Decimal("100")))
 
+    # PV: prefer explicit planned %; else linear from baseline dates
     pv = None
     as_of = as_of or date.today()
-    if baseline_start and baseline_end and baseline_end > baseline_start:
+    if planned_progress_percent is not None:
+        planned = max(Decimal("0"), min(_d(planned_progress_percent), Decimal("100")))
+        pv = _q(bac_d * (planned / Decimal("100")))
+    elif baseline_start and baseline_end and baseline_end > baseline_start:
         total_days = (baseline_end - baseline_start).days
         if total_days > 0:
-            elapsed = (as_of - baseline_start).days
-            elapsed = max(0, min(elapsed, total_days))
+            elapsed = max(0, min((as_of - baseline_start).days, total_days))
             planned_pct = Decimal(elapsed) / Decimal(total_days)
             pv = _q(bac_d * planned_pct)
 
@@ -187,13 +192,20 @@ def aggregate_evm(results: Sequence[EVMResult]) -> EVMResult:
 
 
 def item_evm(item, as_of: Optional[date] = None) -> EVMResult:
-    bac = item.adjusted_amount if item.adjusted_amount is not None else item.original_amount
+    # Prefer model bac property (handles qty×price)
+    bac = getattr(item, "bac", None)
+    if bac is None:
+        bac = item.adjusted_amount if item.adjusted_amount is not None else item.original_amount
+
     progress = item.actual_progress_percentage or 0
+    planned = getattr(item, "planned_progress_percentage", None)
     ac = item.actual_cost
+
     return calculate_item_evm(
         bac=bac,
         progress_percent=progress,
         actual_cost=ac,
+        planned_progress_percent=planned,
         baseline_start=item.baseline_start_date,
         baseline_end=item.baseline_end_date,
         as_of=as_of,
@@ -213,10 +225,6 @@ def project_evm(project, as_of: Optional[date] = None) -> EVMResult:
         results.append(contract_evm(contract, as_of=as_of))
     return aggregate_evm(results)
 
-
-# ===========================================================================
-# S-Curve Generator
-# ===========================================================================
 
 @dataclass
 class SCurveData:
@@ -270,7 +278,6 @@ def _linear_cum(bac: Decimal, start: Optional[date], end: Optional[date], as_of:
 
 
 def _jalali_label(d: date) -> str:
-    """Month label in Jalali (e.g. 1403/06). Falls back to Gregorian if jdatetime missing."""
     try:
         from pms_app.utils.jalali import format_jalali_month
         return format_jalali_month(d) or d.strftime("%Y-%m")
@@ -285,11 +292,7 @@ def generate_s_curve(
     as_of: Optional[date] = None,
     jalali_labels: bool = True,
 ) -> SCurveData:
-    """
-    Generate S-Curve data points (monthly) for a project.
-    Labels default to Jalali calendar (Solar).
-    """
-    as_of = as_of or date.today()
+    as_of = as_of or getattr(project, "data_date", None) or date.today()
 
     items = []
     for contract in getattr(project, "contracts", []):
@@ -301,6 +304,10 @@ def generate_s_curve(
         starts.append(project.start_date)
     if project.finish_date:
         ends.append(project.finish_date)
+    if getattr(project, "baseline_start_date", None):
+        starts.append(project.baseline_start_date)
+    if getattr(project, "baseline_finish_date", None):
+        ends.append(project.baseline_finish_date)
 
     for it in items:
         if it.baseline_start_date:
@@ -333,7 +340,10 @@ def generate_s_curve(
 
     item_data = []
     for it in items:
-        bac = _d(it.adjusted_amount if it.adjusted_amount is not None else it.original_amount)
+        bac_val = getattr(it, "bac", None)
+        bac = _d(bac_val if bac_val is not None else (
+            it.adjusted_amount if it.adjusted_amount is not None else it.original_amount
+        ))
         progress = max(Decimal("0"), min(_d(it.actual_progress_percentage), Decimal("100")))
         ac = _d(it.actual_cost)
         ev_final = _q(bac * progress / Decimal("100"))
@@ -368,11 +378,7 @@ def generate_s_curve(
             cum_ev += _linear_cum(d["ev_final"], d["a_start"], as_of, ref_date)
             cum_ac += _linear_cum(d["ac_final"], d["a_start"], as_of, ref_date)
 
-        if jalali_labels:
-            labels.append(_jalali_label(pt))
-        else:
-            labels.append(pt.strftime("%Y-%m"))
-
+        labels.append(_jalali_label(pt) if jalali_labels else pt.strftime("%Y-%m"))
         date_strs.append(pt.isoformat())
         pv_series.append(float(_q(cum_pv)))
         ev_series.append(float(_q(cum_ev)))
