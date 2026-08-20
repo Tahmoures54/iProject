@@ -9,14 +9,12 @@
     current_user.has_permission('projects.write')
 ) %}
 
-{# Safe defaults for EVM / S-Curve #}
 {% set evm = evm or {} %}
 {% set scurve = scurve or {'labels': [], 'pv': [], 'ev': [], 'ac': []} %}
 
 <div class="min-h-screen bg-slate-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300" dir="rtl">
     <div class="max-w-7xl mx-auto space-y-8 animate-fadeIn">
 
-        {# Header #}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <nav class="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
@@ -34,14 +32,24 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
+                <a href="{{ url_for('projects.schedule', project_id=project.id) }}"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 shadow-sm">
+                    <i class="fas fa-calendar-alt text-blue-500"></i>
+                    زمان‌بندی
+                </a>
+                <a href="{{ url_for('projects.action_plan', project_id=project.id) }}"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 shadow-sm">
+                    <i class="fas fa-tasks text-emerald-500"></i>
+                    اکشن‌پلن
+                </a>
                 <a href="{{ url_for('projects.project_members', project_id=project.id) }}"
-                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 transition-all shadow-sm">
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 shadow-sm">
                     <i class="fas fa-users text-indigo-500"></i>
-                    مدیریت تیم
+                    تیم
                 </a>
                 {% if can_edit_project %}
                 <a href="{{ url_for('projects.project_edit', project_id=project.id) }}"
-                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all">
+                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none">
                     <i class="fas fa-edit"></i>
                     ویرایش
                 </a>
@@ -49,58 +57,44 @@
             </div>
         </div>
 
-        {# ========== EVM KPI Cards ========== #}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">BAC</p>
-                <p class="text-lg font-black text-gray-800 dark:text-white">
-                    {{ "{:,.0f}".format(evm.bac or 0) }}
-                </p>
+                <p class="text-lg font-black text-gray-800 dark:text-white">{{ "{:,.0f}".format(evm.bac or 0) }}</p>
                 <p class="text-[10px] text-gray-400 mt-1">بودجه کل</p>
             </div>
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">EV</p>
-                <p class="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                    {{ "{:,.0f}".format(evm.ev or 0) }}
-                </p>
+                <p class="text-lg font-black text-indigo-600 dark:text-indigo-400">{{ "{:,.0f}".format(evm.ev or 0) }}</p>
                 <p class="text-[10px] text-gray-400 mt-1">ارزش کسب‌شده</p>
             </div>
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">AC</p>
-                <p class="text-lg font-black text-rose-600 dark:text-rose-400">
-                    {{ "{:,.0f}".format(evm.ac or 0) }}
-                </p>
+                <p class="text-lg font-black text-rose-600 dark:text-rose-400">{{ "{:,.0f}".format(evm.ac or 0) }}</p>
                 <p class="text-[10px] text-gray-400 mt-1">هزینه واقعی</p>
             </div>
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">CPI</p>
-                <p class="text-lg font-black {% if (evm.cpi or 1) >= 1 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                    {{ "%.3f"|format(evm.cpi or 0) }}
-                </p>
+                <p class="text-lg font-black {% if (evm.cpi or 1) >= 1 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ "%.3f"|format(evm.cpi or 0) }}</p>
                 <p class="text-[10px] text-gray-400 mt-1">شاخص هزینه</p>
             </div>
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">SPI</p>
-                <p class="text-lg font-black {% if (evm.spi or 1) >= 1 %}text-emerald-600{% else %}text-amber-600{% endif %}">
-                    {{ "%.3f"|format(evm.spi or 0) if evm.spi is not none else '—' }}
-                </p>
+                <p class="text-lg font-black {% if (evm.spi or 1) >= 1 %}text-emerald-600{% else %}text-amber-600{% endif %}">{{ "%.3f"|format(evm.spi or 0) if evm.spi is not none else '—' }}</p>
                 <p class="text-[10px] text-gray-400 mt-1">شاخص زمان</p>
             </div>
             <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">پیشرفت</p>
-                <p class="text-lg font-black text-indigo-600">
-                    {{ "%.1f"|format(evm.percent_complete or 0) }}%
-                </p>
+                <p class="text-lg font-black text-indigo-600">{{ "%.1f"|format(evm.percent_complete or 0) }}%</p>
                 <p class="text-[10px] text-gray-400 mt-1">درصد فیزیکی</p>
             </div>
         </div>
 
-        {# ========== S-Curve Chart ========== #}
         <section class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-black text-gray-800 dark:text-white">نمودار S-Curve</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">مقایسه تجمعی ارزش برنامه‌ریزی‌شده (PV)، ارزش کسب‌شده (EV) و هزینه واقعی (AC)</p>
+                    <p class="text-xs text-gray-500 mt-0.5">مقایسه تجمعی PV / EV / AC</p>
                 </div>
                 <div class="flex items-center gap-4 text-xs font-bold">
                     <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span> PV</span>
@@ -113,25 +107,21 @@
                     <canvas id="sCurveChart"></canvas>
                 </div>
                 {% if not scurve.labels %}
-                <p class="text-center text-sm text-gray-400 mt-4">هنوز داده کافی برای رسم S-Curve وجود ندارد. آیتم‌های قراردادی با بودجه و تاریخ baseline اضافه کنید.</p>
+                <p class="text-center text-sm text-gray-400 mt-4">داده کافی برای S-Curve نیست. آیتم‌ها را با بودجه و تاریخ baseline پر کنید.</p>
                 {% endif %}
             </div>
         </section>
 
-        {# ========== Main content grid ========== #}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
-
-                {# Project info #}
                 <section class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                    <div class="px-8 py-6 border-b border-gray-50 dark:border-gray-700 flex items-center justify-between">
-                        <h3 class="text-lg font-black text-gray-800 dark:text-white">مشخصات فنی و زمان‌بندی</h3>
-                        <i class="fas fa-circle-info text-gray-300"></i>
+                    <div class="px-8 py-6 border-b border-gray-50 dark:border-gray-700">
+                        <h3 class="text-lg font-black text-gray-800 dark:text-white">مشخصات پروژه</h3>
                     </div>
                     <div class="p-8">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12">
                             <div class="space-y-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase">صنعت / حوزه</label>
+                                <label class="text-xs font-bold text-gray-400 uppercase">صنعت</label>
                                 <p class="text-sm font-black text-gray-700 dark:text-gray-300">{{ project.industry or '—' }}</p>
                             </div>
                             <div class="space-y-1">
@@ -147,84 +137,49 @@
                                 <p class="text-sm font-mono font-bold text-rose-600">{{ project.finish_date or '—' }}</p>
                             </div>
                         </div>
-                        {% if project.remarks %}
-                        <div class="mt-8 pt-6 border-t border-gray-50 dark:border-gray-700">
-                            <label class="text-xs font-bold text-gray-400 uppercase block mb-2">توضیحات</label>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 leading-7">{{ project.remarks }}</p>
-                        </div>
-                        {% endif %}
                     </div>
                 </section>
 
-                {# Forecasts #}
                 <section class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-black text-gray-800 dark:text-white mb-5">پیش‌بینی‌های EVM</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/50">
                             <p class="text-xs text-gray-400 font-bold mb-1">EAC</p>
                             <p class="text-xl font-black text-gray-800 dark:text-white">{{ "{:,.0f}".format(evm.eac or 0) }}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">برآورد هزینه نهایی</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/50">
                             <p class="text-xs text-gray-400 font-bold mb-1">ETC</p>
                             <p class="text-xl font-black text-gray-800 dark:text-white">{{ "{:,.0f}".format(evm.etc or 0) }}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">برآورد باقیمانده</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-gray-900/50">
                             <p class="text-xs text-gray-400 font-bold mb-1">VAC</p>
-                            <p class="text-xl font-black {% if (evm.vac or 0) >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                                {{ "{:,.0f}".format(evm.vac or 0) }}
-                            </p>
-                            <p class="text-[10px] text-gray-400 mt-1">انحراف نهایی</p>
+                            <p class="text-xl font-black {% if (evm.vac or 0) >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ "{:,.0f}".format(evm.vac or 0) }}</p>
                         </div>
                     </div>
                 </section>
             </div>
 
-            {# Sidebar #}
             <div class="space-y-6">
-                <div class="bg-indigo-600 rounded-3xl p-7 text-white shadow-xl shadow-indigo-200 dark:shadow-none">
-                    <h4 class="text-base font-black mb-3 flex items-center gap-2">
-                        <i class="fas fa-chart-line"></i>
-                        وضعیت عملکرد
-                    </h4>
+                <div class="bg-indigo-600 rounded-3xl p-7 text-white shadow-xl">
+                    <h4 class="text-base font-black mb-3"><i class="fas fa-chart-line ml-1"></i> وضعیت عملکرد</h4>
                     <ul class="space-y-2 text-sm text-indigo-100">
-                        <li class="flex justify-between">
-                            <span>CPI</span>
-                            <span class="font-bold text-white">
-                                {% if (evm.cpi or 1) >= 1 %}زیر بودجه{% else %}بالای بودجه{% endif %}
-                            </span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span>SPI</span>
-                            <span class="font-bold text-white">
-                                {% if evm.spi is none %}—{% elif evm.spi >= 1 %}جلوتر از برنامه{% else %}عقب از برنامه{% endif %}
-                            </span>
-                        </li>
-                        <li class="flex justify-between">
-                            <span>پیشرفت فیزیکی</span>
-                            <span class="font-bold text-white">{{ "%.1f"|format(evm.percent_complete or 0) }}%</span>
-                        </li>
+                        <li class="flex justify-between"><span>CPI</span><span class="font-bold text-white">{% if (evm.cpi or 1) >= 1 %}زیر بودجه{% else %}بالای بودجه{% endif %}</span></li>
+                        <li class="flex justify-between"><span>SPI</span><span class="font-bold text-white">{% if evm.spi is none %}—{% elif evm.spi >= 1 %}جلوتر{% else %}عقب{% endif %}</span></li>
+                        <li class="flex justify-between"><span>پیشرفت</span><span class="font-bold text-white">{{ "%.1f"|format(evm.percent_complete or 0) }}%</span></li>
                     </ul>
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <h4 class="font-black text-gray-800 dark:text-white mb-4">دسترسی سریع</h4>
                     <div class="space-y-2">
-                        <a href="{{ url_for('contracts.contracts') }}?project_id={{ project.id }}"
-                           class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 transition text-sm font-bold text-gray-700 dark:text-gray-200">
-                            <i class="fas fa-file-contract text-indigo-500 w-5"></i>
-                            قراردادها
+                        <a href="{{ url_for('projects.schedule', project_id=project.id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 text-sm font-bold text-gray-700 dark:text-gray-200">
+                            <i class="fas fa-calendar-alt text-blue-500 w-5"></i> برنامه زمان‌بندی
                         </a>
-                        <a href="{{ url_for('items.items') }}?project_id={{ project.id }}"
-                           class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 transition text-sm font-bold text-gray-700 dark:text-gray-200">
-                            <i class="fas fa-list-check text-emerald-500 w-5"></i>
-                            آیتم‌های قراردادی
+                        <a href="{{ url_for('projects.action_plan', project_id=project.id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 text-sm font-bold text-gray-700 dark:text-gray-200">
+                            <i class="fas fa-tasks text-emerald-500 w-5"></i> اکشن‌پلن
                         </a>
-                        <a href="{{ url_for('projects.project_members', project_id=project.id) }}"
-                           class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 transition text-sm font-bold text-gray-700 dark:text-gray-200">
-                            <i class="fas fa-users text-amber-500 w-5"></i>
-                            اعضای پروژه
+                        <a href="{{ url_for('projects.project_members', project_id=project.id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 text-sm font-bold text-gray-700 dark:text-gray-200">
+                            <i class="fas fa-users text-amber-500 w-5"></i> اعضای پروژه
                         </a>
                     </div>
                 </div>
@@ -234,11 +189,8 @@
 </div>
 
 <style>
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadeIn { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 </style>
 {% endblock %}
 
@@ -250,102 +202,36 @@
     const pvData = {{ scurve.pv | tojson }};
     const evData = {{ scurve.ev | tojson }};
     const acData = {{ scurve.ac | tojson }};
-
     if (!labels.length) return;
-
     const ctx = document.getElementById('sCurveChart');
     if (!ctx) return;
-
-    const isDark = document.documentElement.classList.contains('dark') ||
-                   window.matchMedia('(prefers-color-scheme: dark)').matches;
-
+    const isDark = document.documentElement.classList.contains('dark') || window.matchMedia('(prefers-color-scheme: dark)').matches;
     const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
     const textColor = isDark ? '#94a3b8' : '#64748b';
-
     new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
-                {
-                    label: 'PV (برنامه‌ریزی‌شده)',
-                    data: pvData,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                },
-                {
-                    label: 'EV (کسب‌شده)',
-                    data: evData,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                },
-                {
-                    label: 'AC (واقعی)',
-                    data: acData,
-                    borderColor: '#f43f5e',
-                    backgroundColor: 'rgba(244, 63, 94, 0.08)',
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 3,
-                    pointHoverRadius: 5,
-                    borderWidth: 2.5,
-                }
+                { label: 'PV', data: pvData, borderColor: '#3b82f6', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2.5 },
+                { label: 'EV', data: evData, borderColor: '#10b981', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2.5 },
+                { label: 'AC', data: acData, borderColor: '#f43f5e', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2.5 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: {
-                    display: false,
-                },
+                legend: { display: false },
                 tooltip: {
                     rtl: true,
-                    backgroundColor: isDark ? '#1e293b' : '#fff',
-                    titleColor: isDark ? '#e2e8f0' : '#1e293b',
-                    bodyColor: isDark ? '#94a3b8' : '#475569',
-                    borderColor: isDark ? '#334155' : '#e2e8f0',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function (ctx) {
-                            const val = ctx.parsed.y || 0;
-                            return ctx.dataset.label + ': ' + val.toLocaleString('fa-IR');
-                        }
-                    }
+                    callbacks: { label: function (c) { return c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString('fa-IR'); } }
                 }
             },
             scales: {
-                x: {
-                    grid: { color: gridColor },
-                    ticks: { color: textColor, maxRotation: 45, font: { size: 11 } }
-                },
-                y: {
-                    grid: { color: gridColor },
-                    ticks: {
-                        color: textColor,
-                        font: { size: 11 },
-                        callback: function (value) {
-                            if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
-                            if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-                            if (value >= 1e3) return (value / 1e3).toFixed(0) + 'K';
-                            return value;
-                        }
-                    }
-                }
+                x: { grid: { color: gridColor }, ticks: { color: textColor, maxRotation: 45, font: { size: 11 } } },
+                y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 },
+                    callback: function (v) { if (v>=1e9) return (v/1e9).toFixed(1)+'B'; if (v>=1e6) return (v/1e6).toFixed(1)+'M'; if (v>=1e3) return (v/1e3).toFixed(0)+'K'; return v; } } }
             }
         }
     });
