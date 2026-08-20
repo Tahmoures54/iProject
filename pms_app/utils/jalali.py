@@ -2,16 +2,13 @@
 """
 Jalali (Solar / Persian) calendar helpers.
 
-Storage remains Gregorian (date / datetime) in the database.
-Conversion is used for:
-- display in UI
-- S-Curve / report labels
-- optional parsing of Jalali input strings
+Storage: Gregorian in DB
+Display / forms: Jalali
 """
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 try:
     import jdatetime
@@ -20,83 +17,138 @@ except ImportError:  # pragma: no cover
 
 DateLike = Union[date, datetime, str, None]
 
-# Persian month names
 JALALI_MONTHS = (
-    "فروردین",
-    "اردیبهشت",
-    "خرداد",
-    "تیر",
-    "مرداد",
-    "شهریور",
-    "مهر",
-    "آبان",
-    "آذر",
-    "دی",
-    "بهمن",
-    "اسفند",
+    "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+    "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند",
 )
 
 JALALI_WEEKDAYS = (
-    "شنبه",
-    "یکشنبه",
-    "دوشنبه",
-    "سه‌شنبه",
-    "چهارشنبه",
-    "پنجشنبه",
-    "جمعه",
+    "شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه",
 )
 
 
 def _ensure_jdatetime():
     if jdatetime is None:
-        raise RuntimeError(
-            "پکیج jdatetime نصب نیست. اجرا کنید: pip install jdatetime"
-        )
+        raise RuntimeError("پکیج jdatetime نصب نیست. اجرا کنید: pip install jdatetime")
 
 
-def to_jalali(value: DateLike) -> Optional["jdatetime.date"]:
-    """Convert Gregorian date/datetime/str to jdatetime.date."""
+def _as_gregorian_date(value: DateLike) -> Optional[date]:
+    """Normalize various inputs to a Gregorian date."""
     if value is None:
         return None
-    _ensure_jdatetime()
-
     if isinstance(value, datetime):
-        g = value.date()
-    elif isinstance(value, date):
-        g = value
-    elif isinstance(value, str):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
         value = value.strip()
         if not value:
             return None
-        # try ISO first
         try:
             if "T" in value or " " in value:
-                g = datetime.fromisoformat(value.replace("Z", "")).date()
-            else:
-                g = date.fromisoformat(value[:10])
+                return datetime.fromisoformat(value.replace("Z", "")).date()
+            return date.fromisoformat(value[:10])
         except ValueError:
-            # try Jalali string already
-            parsed = parse_jalali(value)
-            return parsed
-    else:
-        return None
+            return None
+    return None
 
+
+# ---------------------------------------------------------------------------
+# میلادی → خورشیدی
+# ---------------------------------------------------------------------------
+
+def gregorian_to_jalali(value: DateLike) -> Optional[Dict[str, Any]]:
+    """
+    تبدیل تاریخ میلادی به خورشیدی.
+
+    ورودی: date | datetime | "2024-09-19"
+    خروجی نمونه:
+      {
+        "year": 1403, "month": 6, "day": 29,
+        "iso": "1403/06/29",
+        "long": "29 شهریور 1403",
+        "month_name": "شهریور",
+        "weekday": "چهارشنبه",
+      }
+    """
+    g = _as_gregorian_date(value)
+    if g is None:
+        return None
+    _ensure_jdatetime()
+    j = jdatetime.date.fromgregorian(date=g)
+    # jdatetime weekday: 0=شنبه ... 6=جمعه
+    wd = j.weekday()
+    return {
+        "year": j.year,
+        "month": j.month,
+        "day": j.day,
+        "iso": f"{j.year:04d}/{j.month:02d}/{j.day:02d}",
+        "long": f"{j.day} {JALALI_MONTHS[j.month - 1]} {j.year}",
+        "month_name": JALALI_MONTHS[j.month - 1],
+        "weekday": JALALI_WEEKDAYS[wd] if 0 <= wd < 7 else "",
+        "gregorian": g.isoformat(),
+    }
+
+
+def to_jalali(value: DateLike) -> Optional["jdatetime.date"]:
+    """Convert Gregorian → jdatetime.date object."""
+    g = _as_gregorian_date(value)
+    if g is None:
+        # maybe already a Jalali string
+        if isinstance(value, str):
+            return parse_jalali(value)
+        return None
+    _ensure_jdatetime()
     return jdatetime.date.fromgregorian(date=g)
 
 
+def format_jalali(
+    value: DateLike,
+    fmt: str = "%Y/%m/%d",
+    *,
+    with_month_name: bool = False,
+) -> str:
+    """رشته خورشیدی از تاریخ میلادی. مثال: 1403/06/29 یا ۲۹ شهریور ۱۴۰۳"""
+    info = gregorian_to_jalali(value)
+    if info is None:
+        return "—"
+    if with_month_name:
+        return info["long"]
+    if fmt == "%Y/%m/%d":
+        return info["iso"]
+    j = to_jalali(value)
+    if j is None:
+        return "—"
+    try:
+        return j.strftime(fmt)
+    except Exception:
+        return info["iso"]
+
+
+def format_jalali_month(value: DateLike) -> str:
+    info = gregorian_to_jalali(value)
+    if info is None:
+        return ""
+    return f"{info['year']}/{info['month']:02d}"
+
+
+def format_jalali_month_name(value: DateLike) -> str:
+    info = gregorian_to_jalali(value)
+    if info is None:
+        return ""
+    return f"{info['month_name']} {info['year']}"
+
+
+# ---------------------------------------------------------------------------
+# خورشیدی → میلادی
+# ---------------------------------------------------------------------------
+
 def to_gregorian(jy: int, jm: int, jd: int) -> date:
-    """Convert Jalali y/m/d to Gregorian date."""
     _ensure_jdatetime()
     return jdatetime.date(jy, jm, jd).togregorian()
 
 
 def parse_jalali(text: str) -> Optional["jdatetime.date"]:
-    """
-    Parse common Jalali formats:
-    - 1403/01/15
-    - 1403-01-15
-    - 14030115
-    """
     if not text:
         return None
     _ensure_jdatetime()
@@ -106,8 +158,9 @@ def parse_jalali(text: str) -> Optional["jdatetime.date"]:
         if len(parts) == 3:
             y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
             return jdatetime.date(y, m, d)
-        if len(text) == 8 and text.isdigit():
-            y, m, d = int(text[0:4]), int(text[4:6]), int(text[6:8])
+        digits = text.replace("/", "")
+        if len(digits) == 8 and digits.isdigit():
+            y, m, d = int(digits[0:4]), int(digits[4:6]), int(digits[6:8])
             return jdatetime.date(y, m, d)
     except (ValueError, TypeError):
         return None
@@ -115,54 +168,21 @@ def parse_jalali(text: str) -> Optional["jdatetime.date"]:
 
 
 def parse_jalali_to_gregorian(text: str) -> Optional[date]:
-    """Parse Jalali string → Gregorian date (for form input)."""
     j = parse_jalali(text)
-    if j is None:
+    return j.togregorian() if j else None
+
+
+def jalali_to_gregorian_dict(text: str) -> Optional[Dict[str, Any]]:
+    """خورشیدی (رشته) → دیکشنری میلادی."""
+    g = parse_jalali_to_gregorian(text)
+    if g is None:
         return None
-    return j.togregorian()
-
-
-def format_jalali(
-    value: DateLike,
-    fmt: str = "%Y/%m/%d",
-    *,
-    with_month_name: bool = False,
-) -> str:
-    """
-    Format a Gregorian date as Jalali string.
-
-    fmt uses jdatetime strftime codes, e.g.:
-      %Y/%m/%d  → 1403/06/29
-      %Y-%m-%d
-    If with_month_name=True → "۲۹ شهریور ۱۴۰۳"
-    """
-    j = to_jalali(value)
-    if j is None:
-        return "—"
-
-    if with_month_name:
-        return f"{j.day} {JALALI_MONTHS[j.month - 1]} {j.year}"
-
-    try:
-        return j.strftime(fmt)
-    except Exception:
-        return f"{j.year:04d}/{j.month:02d}/{j.day:02d}"
-
-
-def format_jalali_month(value: DateLike) -> str:
-    """Short label for charts: 1403/06"""
-    j = to_jalali(value)
-    if j is None:
-        return ""
-    return f"{j.year}/{j.month:02d}"
-
-
-def format_jalali_month_name(value: DateLike) -> str:
-    """e.g. شهریور ۱۴۰۳"""
-    j = to_jalali(value)
-    if j is None:
-        return ""
-    return f"{JALALI_MONTHS[j.month - 1]} {j.year}"
+    return {
+        "year": g.year,
+        "month": g.month,
+        "day": g.day,
+        "iso": g.isoformat(),
+    }
 
 
 def jalali_today() -> "jdatetime.date":
@@ -171,23 +191,22 @@ def jalali_today() -> "jdatetime.date":
 
 
 def days_between(start: DateLike, end: DateLike) -> Optional[int]:
-    """Calendar day difference (Gregorian under the hood – same for both calendars)."""
-    j1 = to_jalali(start)
-    j2 = to_jalali(end)
-    if j1 is None or j2 is None:
+    g1 = _as_gregorian_date(start) or (
+        parse_jalali_to_gregorian(start) if isinstance(start, str) else None
+    )
+    g2 = _as_gregorian_date(end) or (
+        parse_jalali_to_gregorian(end) if isinstance(end, str) else None
+    )
+    if g1 is None or g2 is None:
         return None
-    g1 = j1.togregorian()
-    g2 = j2.togregorian()
     return (g2 - g1).days
 
 
 def add_jalali_months(value: DateLike, months: int) -> Optional[date]:
-    """Add months in Jalali calendar, return Gregorian date."""
     j = to_jalali(value)
     if j is None:
         return None
     _ensure_jdatetime()
-    # jdatetime supports replace; handle year overflow manually
     y, m, d = j.year, j.month, j.day
     m += months
     while m > 12:
@@ -196,7 +215,6 @@ def add_jalali_months(value: DateLike, months: int) -> Optional[date]:
     while m < 1:
         m += 12
         y -= 1
-    # clamp day to month length
     for day in range(d, 0, -1):
         try:
             return jdatetime.date(y, m, day).togregorian()
