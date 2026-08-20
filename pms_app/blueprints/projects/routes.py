@@ -17,6 +17,7 @@ from pms_app.models.project_membership import ProjectMembership
 from pms_app.models.user import User
 from pms_app.utils.entitlements import can_create
 from pms_app.utils.security import ensure_rbac_seed, is_owner
+from pms_app.utils.evm import project_evm, project_s_curve
 from . import bp
 from .forms import ProjectForm, InviteToProjectForm
 
@@ -125,7 +126,6 @@ def generate_random_password(length=10):
 
 
 def send_welcome_email(user, plain_password):
-    # TODO: جایگزین با سرویس ایمیل واقعی
     flash(f"ایمیل خوش‌آمدگویی به {user.email} با رمز موقت {plain_password} ارسال شد.", "info")
 
 
@@ -200,7 +200,6 @@ def project_new():
         db.session.add(project)
         try:
             db.session.commit()
-            # پروژه‌سازنده را به صورت خودکار عضو (admin) پروژه کنیم
             membership = ProjectMembership(
                 project_id=project.id,
                 user_id=current_user.id,
@@ -231,7 +230,17 @@ def project_new():
 @require_permission("projects.read")
 def project_view(project_id: int):
     project = get_project_or_403(project_id)
-    return render_template("projects/project_view.html", project=project)
+
+    # EVM + S-Curve data
+    evm = project_evm(project)
+    scurve = project_s_curve(project)
+
+    return render_template(
+        "projects/project_view.html",
+        project=project,
+        evm=evm.as_dict(),
+        scurve=scurve,
+    )
 
 
 @bp.route("/projects/<int:project_id>/edit", methods=["GET", "POST"])
@@ -283,7 +292,7 @@ def project_delete(project_id: int):
     project = get_project_or_403(project_id)
 
     try:
-        db.session.delete(project)  # cascade به memberships هم حذف می‌کند
+        db.session.delete(project)
         db.session.commit()
         flash("پروژه با موفقیت حذف شد.", "info")
     except SQLAlchemyError:
@@ -325,37 +334,33 @@ def project_invite(project_id: int):
         created = False
         plain_password = None
 
-        # اگر کاربر وجود نداشت، ایجاد کن
         if not target_user:
             full_name = form.full_name.data.strip() if form.full_name.data else None
             if not full_name:
                 flash("برای کاربر جدید، نام و نام خانوادگی الزامی است.", "warning")
                 return render_template("projects/invite.html", form=form, project=project)
 
-            # ایجاد کاربر جدید با رمز موقت
             plain_password = generate_random_password()
             target_user = User(
                 email=email,
                 full_name=full_name,
                 is_active=True,
-                company_id=project.company_id  # کاربر به همان شرکت پروژه تعلق دارد
+                company_id=project.company_id
             )
             target_user.set_password(plain_password)
             db.session.add(target_user)
             try:
-                db.session.flush()  # برای گرفتن id
+                db.session.flush()
                 created = True
             except IntegrityError:
                 db.session.rollback()
                 flash("خطا در ایجاد حساب کاربری.", "danger")
                 return render_template("projects/invite.html", form=form, project=project)
 
-        # بررسی تعلق به شرکت
         if target_user.company_id != project.company_id:
             flash("کاربر باید از همان شرکت باشد.", "danger")
             return render_template("projects/invite.html", form=form, project=project)
 
-        # بررسی عضویت تکراری
         existing = ProjectMembership.query.filter_by(
             project_id=project.id,
             user_id=target_user.id
@@ -368,7 +373,7 @@ def project_invite(project_id: int):
             project_id=project.id,
             user_id=target_user.id,
             role=role,
-            status="active",  # مستقیم فعال می‌شود
+            status="active",
             invited_by_id=current_user.id,
             invited_at=datetime.utcnow(),
             joined_at=datetime.utcnow()
@@ -432,7 +437,6 @@ def project_remove_member(project_id: int, membership_id: int):
     if membership.project_id != project_id:
         abort(404)
 
-    # جلوگیری از حذف آخرین ادمین (اختیاری ولی مفید)
     if membership.role == "admin":
         admin_count = ProjectMembership.query.filter_by(
             project_id=project_id,

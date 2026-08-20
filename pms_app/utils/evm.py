@@ -1,33 +1,22 @@
 # Path: pms_app/utils/evm.py
 """
-Earned Value Management (EVM) calculation utilities.
+Earned Value Management (EVM) calculation utilities + S-Curve generator.
 
-Standards followed (simplified practical version suitable for construction / contract-based projects):
-- BAC  : Budget at Completion
-- EV   : Earned Value   = BAC × % Complete
-- AC   : Actual Cost
-- PV   : Planned Value  (time-based approximation when baseline dates exist)
-- CV   : Cost Variance  = EV − AC
-- SV   : Schedule Variance = EV − PV
-- CPI  : Cost Performance Index = EV / AC
-- SPI  : Schedule Performance Index = EV / PV
-- EAC  : Estimate at Completion (several methods)
-- ETC  : Estimate to Complete
-- VAC  : Variance at Completion = BAC − EAC
-- TCPI : To-Complete Performance Index
+Standards followed (practical version for construction / contract-based projects):
+- BAC, EV, AC, PV, CV, SV, CPI, SPI, EAC, ETC, VAC, TCPI
+- S-Curve: cumulative PV / EV / AC over time
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date, datetime
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 Number = Union[int, float, Decimal, None]
 
 
 def _d(value: Number, default: Decimal = Decimal("0")) -> Decimal:
-    """Safely convert to Decimal."""
     if value is None:
         return default
     try:
@@ -37,7 +26,6 @@ def _d(value: Number, default: Decimal = Decimal("0")) -> Decimal:
 
 
 def _q(value: Decimal, places: str = "0.01") -> Decimal:
-    """Quantize to money / percentage precision."""
     return value.quantize(Decimal(places), rounding=ROUND_HALF_UP)
 
 
@@ -49,26 +37,19 @@ def _safe_div(numerator: Decimal, denominator: Decimal) -> Optional[Decimal]:
 
 @dataclass
 class EVMResult:
-    """Container for all key EVM metrics."""
-    bac: Decimal = Decimal("0")          # Budget at Completion
-    ev: Decimal = Decimal("0")           # Earned Value
-    ac: Decimal = Decimal("0")           # Actual Cost
-    pv: Optional[Decimal] = None         # Planned Value
+    bac: Decimal = Decimal("0")
+    ev: Decimal = Decimal("0")
+    ac: Decimal = Decimal("0")
+    pv: Optional[Decimal] = None
     percent_complete: Decimal = Decimal("0")
-
-    # Variances
-    cv: Optional[Decimal] = None         # Cost Variance
-    sv: Optional[Decimal] = None         # Schedule Variance
-
-    # Indices
+    cv: Optional[Decimal] = None
+    sv: Optional[Decimal] = None
     cpi: Optional[Decimal] = None
     spi: Optional[Decimal] = None
-
-    # Forecasts
-    eac: Optional[Decimal] = None        # Estimate at Completion
-    etc: Optional[Decimal] = None        # Estimate to Complete
-    vac: Optional[Decimal] = None        # Variance at Completion
-    tcpi: Optional[Decimal] = None       # To-Complete Performance Index
+    eac: Optional[Decimal] = None
+    etc: Optional[Decimal] = None
+    vac: Optional[Decimal] = None
+    tcpi: Optional[Decimal] = None
 
     def as_dict(self) -> dict:
         def fmt(v: Optional[Decimal]):
@@ -103,26 +84,12 @@ def calculate_item_evm(
     as_of: Optional[date] = None,
     weight: Number = None,
 ) -> EVMResult:
-    """
-    Calculate EVM metrics for a single work item / activity.
-
-    Parameters
-    ----------
-    bac : Budget at Completion (usually adjusted_amount or original_amount)
-    progress_percent : Physical or earned % complete (0-100)
-    actual_cost : Actual Cost spent so far
-    baseline_start / baseline_end : for simplified time-based PV
-    as_of : calculation date (defaults to today)
-    weight : optional weight factor (not used in core formulas, available for aggregation)
-    """
     bac_d = _d(bac)
     progress = max(Decimal("0"), min(_d(progress_percent), Decimal("100")))
     ac_d = _d(actual_cost)
 
-    # Earned Value
     ev = _q(bac_d * (progress / Decimal("100")))
 
-    # Planned Value (simplified linear time-phased)
     pv = None
     as_of = as_of or date.today()
     if baseline_start and baseline_end and baseline_end > baseline_start:
@@ -133,29 +100,21 @@ def calculate_item_evm(
             planned_pct = Decimal(elapsed) / Decimal(total_days)
             pv = _q(bac_d * planned_pct)
 
-    # Variances
-    cv = _q(ev - ac_d) if ac_d is not None else None
+    cv = _q(ev - ac_d)
     sv = _q(ev - pv) if pv is not None else None
 
-    # Performance Indices
     cpi = _safe_div(ev, ac_d) if ac_d > 0 else (Decimal("1") if ev == 0 else None)
     spi = _safe_div(ev, pv) if pv and pv > 0 else None
 
-    # Estimate at Completion – most common method: EAC = BAC / CPI
     eac = None
     if cpi and cpi > 0:
         eac = _q(bac_d / cpi)
     elif ac_d > 0 and progress > 0:
-        # fallback: AC + (BAC - EV)
         eac = _q(ac_d + (bac_d - ev))
 
-    # Estimate to Complete
     etc = _q(eac - ac_d) if eac is not None else None
-
-    # Variance at Completion
     vac = _q(bac_d - eac) if eac is not None else None
 
-    # TCPI (based on BAC)
     remaining_work = bac_d - ev
     remaining_funds = bac_d - ac_d
     tcpi = _safe_div(remaining_work, remaining_funds) if remaining_funds != 0 else None
@@ -178,10 +137,6 @@ def calculate_item_evm(
 
 
 def aggregate_evm(results: Sequence[EVMResult]) -> EVMResult:
-    """
-    Aggregate multiple EVMResult objects (e.g. all items of a contract or project).
-    Uses sum of BAC, EV, AC, PV.
-    """
     if not results:
         return EVMResult()
 
@@ -194,7 +149,6 @@ def aggregate_evm(results: Sequence[EVMResult]) -> EVMResult:
     if pvs:
         total_pv = sum(pvs, Decimal("0"))
 
-    # Weighted percent complete
     percent = Decimal("0")
     if total_bac > 0:
         percent = _q((total_ev / total_bac) * Decimal("100"), "0.01")
@@ -235,23 +189,10 @@ def aggregate_evm(results: Sequence[EVMResult]) -> EVMResult:
     )
 
 
-# ---------------------------------------------------------------------------
-# Convenience helpers that work directly with model instances
-# ---------------------------------------------------------------------------
-
 def item_evm(item, as_of: Optional[date] = None) -> EVMResult:
-    """
-    Calculate EVM for a ContractItem instance.
-    Uses:
-      - BAC = adjusted_amount or original_amount
-      - progress = actual_progress_percentage
-      - AC = actual_cost
-      - baseline dates for PV
-    """
     bac = item.adjusted_amount if item.adjusted_amount is not None else item.original_amount
     progress = item.actual_progress_percentage or 0
     ac = item.actual_cost
-
     return calculate_item_evm(
         bac=bac,
         progress_percent=progress,
@@ -264,17 +205,200 @@ def item_evm(item, as_of: Optional[date] = None) -> EVMResult:
 
 
 def contract_evm(contract, as_of: Optional[date] = None) -> EVMResult:
-    """Aggregate EVM for all items belonging to a contract."""
     items = list(contract.items) if hasattr(contract, "items") else []
     results = [item_evm(it, as_of=as_of) for it in items]
     return aggregate_evm(results)
 
 
 def project_evm(project, as_of: Optional[date] = None) -> EVMResult:
-    """
-    Aggregate EVM across all contracts (and their items) of a project.
-    """
     results = []
     for contract in getattr(project, "contracts", []):
         results.append(contract_evm(contract, as_of=as_of))
     return aggregate_evm(results)
+
+
+# ===========================================================================
+# S-Curve Generator
+# ===========================================================================
+
+@dataclass
+class SCurvePoint:
+    label: str
+    date: date
+    pv: float
+    ev: float
+    ac: float
+
+
+@dataclass
+class SCurveData:
+    labels: List[str] = field(default_factory=list)
+    pv: List[float] = field(default_factory=list)
+    ev: List[float] = field(default_factory=list)
+    ac: List[float] = field(default_factory=list)
+    dates: List[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return {
+            "labels": self.labels,
+            "pv": self.pv,
+            "ev": self.ev,
+            "ac": self.ac,
+            "dates": self.dates,
+        }
+
+
+def _month_end(d: date) -> date:
+    """Return last day of the month for date d."""
+    if d.month == 12:
+        return date(d.year, 12, 31)
+    return date(d.year, d.month + 1, 1) - timedelta(days=1)
+
+
+def _add_months(d: date, months: int) -> date:
+    month = d.month - 1 + months
+    year = d.year + month // 12
+    month = month % 12 + 1
+    day = min(d.day, [31,
+                      29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+                      31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+    return date(year, month, day)
+
+
+def _linear_cum(bac: Decimal, start: Optional[date], end: Optional[date], as_of: date) -> Decimal:
+    """Linear cumulative value of bac between start and end at as_of."""
+    if bac <= 0 or not start or not end or end <= start:
+        return Decimal("0")
+    if as_of <= start:
+        return Decimal("0")
+    if as_of >= end:
+        return bac
+    total_days = (end - start).days
+    elapsed = (as_of - start).days
+    return _q(bac * Decimal(elapsed) / Decimal(total_days))
+
+
+def generate_s_curve(
+    project,
+    *,
+    months: int = 12,
+    as_of: Optional[date] = None,
+) -> SCurveData:
+    """
+    Generate S-Curve data points (monthly) for a project.
+
+    Strategy (practical when historical progress snapshots are not stored):
+    - Collect all items from all contracts.
+    - PV: linear distribution of each item BAC between baseline_start → baseline_end
+          (fallback to project start/finish).
+    - EV: assume current progress was achieved linearly from item start to today.
+    - AC: assume actual_cost was incurred linearly from item start to today.
+
+    Returns labels + three series ready for Chart.js.
+    """
+    as_of = as_of or date.today()
+
+    # Collect items
+    items = []
+    for contract in getattr(project, "contracts", []):
+        items.extend(list(getattr(contract, "items", [])))
+
+    # Determine time window
+    starts = []
+    ends = []
+    if project.start_date:
+        starts.append(project.start_date)
+    if project.finish_date:
+        ends.append(project.finish_date)
+
+    for it in items:
+        if it.baseline_start_date:
+            starts.append(it.baseline_start_date)
+        if it.baseline_end_date:
+            ends.append(it.baseline_end_date)
+        if it.actual_start_date:
+            starts.append(it.actual_start_date)
+
+    if not starts:
+        starts.append(as_of.replace(day=1))
+    if not ends:
+        ends.append(as_of)
+
+    start_date = min(starts)
+    end_date = max(ends)
+    # extend a bit into future if project is still running
+    if end_date < as_of:
+        end_date = as_of
+
+    # Build month-end points
+    points: List[date] = []
+    cursor = date(start_date.year, start_date.month, 1)
+    while cursor <= end_date:
+        points.append(_month_end(cursor))
+        cursor = _add_months(cursor, 1)
+        if len(points) > 60:  # safety
+            break
+
+    if not points:
+        points = [as_of]
+
+    # Pre-compute item parameters
+    item_data = []
+    for it in items:
+        bac = _d(it.adjusted_amount if it.adjusted_amount is not None else it.original_amount)
+        progress = max(Decimal("0"), min(_d(it.actual_progress_percentage), Decimal("100")))
+        ac = _d(it.actual_cost)
+        ev_final = _q(bac * progress / Decimal("100"))
+
+        b_start = it.baseline_start_date or project.start_date or start_date
+        b_end = it.baseline_end_date or project.finish_date or end_date
+        a_start = it.actual_start_date or b_start
+
+        item_data.append({
+            "bac": bac,
+            "ev_final": ev_final,
+            "ac_final": ac,
+            "b_start": b_start,
+            "b_end": b_end,
+            "a_start": a_start,
+        })
+
+    labels = []
+    pv_series = []
+    ev_series = []
+    ac_series = []
+    date_strs = []
+
+    for pt in points:
+        cum_pv = Decimal("0")
+        cum_ev = Decimal("0")
+        cum_ac = Decimal("0")
+
+        for d in item_data:
+            # PV – full planned curve
+            cum_pv += _linear_cum(d["bac"], d["b_start"], d["b_end"], pt)
+
+            # EV & AC – linear from actual/baseline start to today (as_of)
+            # After as_of we freeze at current value
+            ref_date = min(pt, as_of)
+            cum_ev += _linear_cum(d["ev_final"], d["a_start"], as_of, ref_date)
+            cum_ac += _linear_cum(d["ac_final"], d["a_start"], as_of, ref_date)
+
+        labels.append(pt.strftime("%Y-%m"))
+        date_strs.append(pt.isoformat())
+        pv_series.append(float(_q(cum_pv)))
+        ev_series.append(float(_q(cum_ev)))
+        ac_series.append(float(_q(cum_ac)))
+
+    return SCurveData(
+        labels=labels,
+        pv=pv_series,
+        ev=ev_series,
+        ac=ac_series,
+        dates=date_strs,
+    )
+
+
+def project_s_curve(project, **kwargs) -> dict:
+    """Convenience wrapper returning dict for JSON / templates."""
+    return generate_s_curve(project, **kwargs).as_dict()
