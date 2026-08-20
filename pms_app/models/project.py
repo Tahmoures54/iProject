@@ -1,5 +1,7 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
 
 from sqlalchemy.ext.associationproxy import association_proxy
 
@@ -15,7 +17,6 @@ class Project(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Tenant scope (شرکت)
     company_id = db.Column(
         db.Integer,
         db.ForeignKey("companies.id", ondelete="CASCADE"),
@@ -39,37 +40,22 @@ class Project(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
-    # ──────────────────────────────────────────────
-    # Relationships
-    # ──────────────────────────────────────────────
-
     company = db.relationship(
         "Company",
         backref=db.backref("projects", lazy="dynamic"),
         lazy="joined",
     )
 
-    # استفاده از association object (کلاس ProjectMembership)
-    # ProjectMembership با backref نام "memberships" را روی Project ایجاد می‌کند.
-    # این proxy اجازه می‌دهد با project.members مستقیم به لیست کاربران دسترسی داشته باشیم.
     members = association_proxy("memberships", "user")
 
-    # ──────────────────────────────────────────────
-    # Table constraints & indexes
-    # ──────────────────────────────────────────────
     __table_args__ = (
         db.UniqueConstraint("company_id", "project_code", name="uq_projects_company_code"),
         db.Index("ix_projects_company_status", "company_id", "status"),
     )
 
-    # ──────────────────────────────────────────────
-    # Helper properties & methods
-    # ──────────────────────────────────────────────
-
     @property
     def active_member_count(self) -> int:
-        """تعداد اعضای فعال پروژه"""
-        from pms_app.models.project_membership import ProjectMembership  # late import
+        from pms_app.models.project_membership import ProjectMembership
         return (
             db.session.query(ProjectMembership)
             .filter_by(project_id=self.id, status="active")
@@ -81,7 +67,6 @@ class Project(db.Model):
         return self.status == "active"
 
     def has_member(self, user) -> bool:
-        """آیا کاربر عضو فعال این پروژه است؟"""
         from pms_app.models.project_membership import ProjectMembership
         if not user or not user.id:
             return False
@@ -95,32 +80,14 @@ class Project(db.Model):
         )
 
     def can_access(self, user) -> bool:
-        """
-        آیا کاربر اجازه دسترسی به این پروژه را دارد؟
-        منطق اولویت‌دار:
-        - مالک پلتفرم → همیشه بله
-        - اگر پروژه به شرکت کاربر تعلق نداشته باشد → خیر
-        - ادمین شرکت → بله (برای تمام پروژه‌های شرکت)
-        - کاربران عادی → فقط اگر عضو فعال پروژه باشند
-        """
-        from pms_app.models.user import User  # late import اگر لازم باشد
-
         if not user or not user.is_active:
             return False
-
-        # مالک پلتفرم همیشه دسترسی دارد
         if user.is_owner:
             return True
-
-        # پروژه باید متعلق به شرکت کاربر باشد
         if self.company_id != user.company_id:
             return False
-
-        # ادمین شرکت دسترسی کامل به پروژه‌های شرکت دارد
         if user.is_company_admin:
             return True
-
-        # کاربران معمولی فقط با عضویت مستقیم
         return self.has_member(user)
 
     def __repr__(self) -> str:
@@ -128,3 +95,44 @@ class Project(db.Model):
             f"<Project id={self.id} company_id={self.company_id} "
             f"code={self.project_code!r} name={self.project_name!r}>"
         )
+
+    # ------------------------------------------------------------------
+    # Earned Value Management (project-level aggregation)
+    # ------------------------------------------------------------------
+    def get_evm(self, as_of: Optional[date] = None):
+        """Return aggregated EVMResult across all contracts of this project."""
+        from pms_app.utils.evm import project_evm
+        return project_evm(self, as_of=as_of)
+
+    @property
+    def bac(self) -> Optional[Decimal]:
+        result = self.get_evm()
+        return result.bac if result.bac > 0 else None
+
+    @property
+    def earned_value(self) -> Optional[Decimal]:
+        return self.get_evm().ev
+
+    @property
+    def actual_cost_total(self) -> Optional[Decimal]:
+        return self.get_evm().ac
+
+    @property
+    def cpi(self) -> Optional[Decimal]:
+        return self.get_evm().cpi
+
+    @property
+    def spi(self) -> Optional[Decimal]:
+        return self.get_evm().spi
+
+    @property
+    def percent_complete(self) -> Optional[Decimal]:
+        return self.get_evm().percent_complete
+
+    @property
+    def eac(self) -> Optional[Decimal]:
+        return self.get_evm().eac
+
+    def evm_summary(self) -> dict:
+        """Dict ready for dashboards / API / templates."""
+        return self.get_evm().as_dict()

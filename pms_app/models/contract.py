@@ -17,7 +17,6 @@ class Contract(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # NEW: tenant scope (برای فیلتر ساده و جلوگیری از leakage)
     company_id = db.Column(
         db.Integer,
         db.ForeignKey("companies.id", ondelete="CASCADE"),
@@ -90,3 +89,40 @@ class Contract(db.Model):
 
     def sms_purpose_due_reminder(self, *, days_before: int) -> str:
         return f"CONTRACT_DUE_REMINDER:{int(self.id)}:{int(days_before)}"
+
+    # ------------------------------------------------------------------
+    # Earned Value Management (aggregated from items)
+    # ------------------------------------------------------------------
+    def get_evm(self, as_of: Optional[date] = None):
+        """Return aggregated EVMResult for this contract."""
+        from pms_app.utils.evm import contract_evm
+        return contract_evm(self, as_of=as_of)
+
+    @property
+    def bac(self) -> Optional[Decimal]:
+        result = self.get_evm()
+        return result.bac if result.bac > 0 else None
+
+    @property
+    def earned_value(self) -> Optional[Decimal]:
+        return self.get_evm().ev
+
+    @property
+    def actual_cost_total(self) -> Optional[Decimal]:
+        return self.get_evm().ac
+
+    @property
+    def cpi(self) -> Optional[Decimal]:
+        return self.get_evm().cpi
+
+    @property
+    def spi(self) -> Optional[Decimal]:
+        return self.get_evm().spi
+
+    @property
+    def percent_complete(self) -> Optional[Decimal]:
+        return self.get_evm().percent_complete
+
+    def evm_summary(self) -> dict:
+        """Dict ready for templates / API."""
+        return self.get_evm().as_dict()

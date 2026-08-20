@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional
 
 from pms_app.extensions import db
@@ -17,6 +18,7 @@ class ContractItem(db.Model):
     - tenant-aware (company_id)
     - rich WBS fields (L1..L9)
     - scheduling, cost, progress, relationships and metadata
+    - Full Earned Value Management support
     """
     __tablename__ = "contract_items"
 
@@ -109,7 +111,7 @@ class ContractItem(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
-    # New proposed fields
+    # Additional fields
     responsible_owner_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id", ondelete="SET NULL"),
@@ -120,8 +122,8 @@ class ContractItem(db.Model):
     approval_status = db.Column(db.String(20), nullable=True)
     approval_date = db.Column(db.Date, nullable=True)
     revision_number = db.Column(db.Integer, nullable=True, default=0)
-    estimated_duration = db.Column(db.Numeric(18, 4), nullable=True)  # e.g. days
-    predecessors = db.Column(db.Text, nullable=True)  # comma-separated ids or codes
+    estimated_duration = db.Column(db.Numeric(18, 4), nullable=True)
+    predecessors = db.Column(db.Text, nullable=True)
     successors = db.Column(db.Text, nullable=True)
     actual_cost = db.Column(db.Numeric(18, 2), nullable=True)
     cost_category = db.Column(db.String(50), nullable=True, index=True)
@@ -155,10 +157,78 @@ class ContractItem(db.Model):
             f"contract_id={self.contract_id} title={self.title!r}>"
         )
 
-    # convenience helpers
+    # ------------------------------------------------------------------
+    # Basic helpers
+    # ------------------------------------------------------------------
     def duration_days(self) -> Optional[float]:
-        """Return planned duration in days (baseline_end - baseline_start) if available."""
         if self.baseline_start_date and self.baseline_end_date:
             delta = (self.baseline_end_date - self.baseline_start_date).days
             return float(delta)
         return None
+
+    @property
+    def bac(self) -> Optional[Decimal]:
+        """Budget at Completion."""
+        if self.adjusted_amount is not None:
+            return Decimal(str(self.adjusted_amount))
+        if self.original_amount is not None:
+            return Decimal(str(self.original_amount))
+        return None
+
+    # ------------------------------------------------------------------
+    # Earned Value Management
+    # ------------------------------------------------------------------
+    def get_evm(self, as_of: Optional[date] = None):
+        """Return full EVMResult for this item."""
+        from pms_app.utils.evm import item_evm
+        return item_evm(self, as_of=as_of)
+
+    @property
+    def earned_value(self) -> Optional[Decimal]:
+        """EV = BAC × (% Complete / 100)"""
+        result = self.get_evm()
+        return result.ev if result.bac > 0 else None
+
+    @property
+    def cost_variance(self) -> Optional[Decimal]:
+        """CV = EV − AC"""
+        return self.get_evm().cv
+
+    @property
+    def schedule_variance(self) -> Optional[Decimal]:
+        """SV = EV − PV"""
+        return self.get_evm().sv
+
+    @property
+    def cpi(self) -> Optional[Decimal]:
+        """Cost Performance Index"""
+        return self.get_evm().cpi
+
+    @property
+    def spi(self) -> Optional[Decimal]:
+        """Schedule Performance Index"""
+        return self.get_evm().spi
+
+    @property
+    def eac(self) -> Optional[Decimal]:
+        """Estimate at Completion"""
+        return self.get_evm().eac
+
+    @property
+    def etc(self) -> Optional[Decimal]:
+        """Estimate to Complete"""
+        return self.get_evm().etc
+
+    @property
+    def vac(self) -> Optional[Decimal]:
+        """Variance at Completion"""
+        return self.get_evm().vac
+
+    @property
+    def tcpi(self) -> Optional[Decimal]:
+        """To-Complete Performance Index"""
+        return self.get_evm().tcpi
+
+    def evm_summary(self) -> dict:
+        """Return a dict ready for API / templates."""
+        return self.get_evm().as_dict()
