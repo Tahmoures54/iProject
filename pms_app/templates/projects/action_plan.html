@@ -1,0 +1,121 @@
+{# Path: pms_app/templates/projects/action_plan.html #}
+{% extends "base.html" %}
+{% block title %}اکشن‌پلن | {{ project.project_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8" dir="rtl">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <nav class="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
+          <a href="{{ url_for('projects.project_view', project_id=project.id) }}" class="hover:text-indigo-600">{{ project.project_name }}</a>
+          <i class="fas fa-chevron-left text-[8px]"></i>
+          <span class="text-indigo-600">اکشن‌پلن</span>
+        </nav>
+        <h1 class="text-2xl font-black text-gray-800 dark:text-white">اکشن‌پلن پروژه</h1>
+        <p class="text-sm text-gray-500 mt-1">اقدامات عملیاتی، مسئول و مهلت</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{{ url_for('projects.schedule', project_id=project.id) }}"
+           class="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold">
+          <i class="fas fa-calendar-alt ml-1"></i> زمان‌بندی
+        </a>
+        <a href="{{ url_for('projects.action_new', project_id=project.id) }}"
+           class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+          <i class="fas fa-plus ml-1"></i> اقدام جدید
+        </a>
+      </div>
+    </div>
+
+    {# Filters #}
+    <div class="flex flex-wrap gap-2">
+      <a href="{{ url_for('projects.action_plan', project_id=project.id) }}"
+         class="px-3 py-1.5 rounded-full text-xs font-bold {% if not status_filter %}bg-indigo-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 border{% endif %}">
+        همه ({{ actions|length }})
+      </a>
+      {% for st, label in [('open','باز'),('in_progress','در حال انجام'),('done','انجام‌شده'),('blocked','مسدود')] %}
+      <a href="{{ url_for('projects.action_plan', project_id=project.id, status=st) }}"
+         class="px-3 py-1.5 rounded-full text-xs font-bold {% if status_filter == st %}bg-indigo-600 text-white{% else %}bg-white dark:bg-gray-800 text-gray-600 border{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="space-y-3">
+      {% for action in actions %}
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 flex flex-col sm:flex-row sm:items-center gap-4
+                  {% if action.is_overdue %}ring-1 ring-rose-300 dark:ring-rose-700{% endif %}">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="font-bold text-gray-800 dark:text-white {% if action.is_done %}line-through opacity-60{% endif %}">
+              {{ action.title }}
+            </h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black
+              {% if action.priority == 'critical' %}bg-rose-100 text-rose-700
+              {% elif action.priority == 'high' %}bg-amber-100 text-amber-700
+              {% elif action.priority == 'low' %}bg-slate-100 text-slate-600
+              {% else %}bg-blue-50 text-blue-600{% endif %}">
+              {{ action.priority_label }}
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black
+              {% if action.status == 'done' %}bg-emerald-50 text-emerald-600
+              {% elif action.status == 'in_progress' %}bg-indigo-50 text-indigo-600
+              {% elif action.status == 'blocked' %}bg-rose-50 text-rose-600
+              {% else %}bg-gray-100 text-gray-500{% endif %}">
+              {{ action.status_label }}
+            </span>
+            {% if action.is_overdue %}
+            <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-600 text-white">سررسید گذشته</span>
+            {% endif %}
+          </div>
+          {% if action.description %}
+          <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ action.description }}</p>
+          {% endif %}
+          <div class="flex flex-wrap gap-4 mt-2 text-[11px] text-gray-400">
+            {% if action.assignee %}
+            <span><i class="fas fa-user ml-1"></i>{{ action.assignee.full_name or action.assignee.email }}</span>
+            {% endif %}
+            {% if action.due_date %}
+            <span><i class="fas fa-calendar ml-1"></i>{{ action.due_date }}</span>
+            {% endif %}
+            {% if action.progress_percent %}
+            <span>{{ action.progress_percent }}%</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          {% if not action.is_done %}
+          <form method="post" action="{{ url_for('projects.action_done', project_id=project.id, action_id=action.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100" title="انجام شد">
+              <i class="fas fa-check"></i>
+            </button>
+          </form>
+          {% endif %}
+          <a href="{{ url_for('projects.action_edit', project_id=project.id, action_id=action.id) }}"
+             class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200 text-xs font-bold hover:bg-slate-100">
+            <i class="fas fa-pen"></i>
+          </a>
+          <form method="post" action="{{ url_for('projects.action_delete', project_id=project.id, action_id=action.id) }}"
+                onsubmit="return confirm('حذف این اقدام؟');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-12 text-center">
+        <p class="text-gray-400 mb-4">هنوز اقدامی ثبت نشده است.</p>
+        <a href="{{ url_for('projects.action_new', project_id=project.id) }}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700">
+          <i class="fas fa-plus"></i> ایجاد اولین اقدام
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{# Path: pms_app/templates/projects/schedule.html #}
+{% extends "base.html" %}
+{% block title %}برنامه زمان‌بندی | {{ project.project_name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8" dir="rtl">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <nav class="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
+          <a href="{{ url_for('projects.project_view', project_id=project.id) }}" class="hover:text-indigo-600">{{ project.project_name }}</a>
+          <i class="fas fa-chevron-left text-[8px]"></i>
+          <span class="text-indigo-600">برنامه زمان‌بندی</span>
+        </nav>
+        <h1 class="text-2xl font-black text-gray-800 dark:text-white">برنامه زمان‌بندی (Schedule)</h1>
+        <p class="text-sm text-gray-500 mt-1">فعالیت‌های WBS / آیتم‌های قراردادی با تاریخ و پیشرفت</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{{ url_for('projects.action_plan', project_id=project.id) }}"
+           class="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50">
+          <i class="fas fa-tasks ml-1"></i> اکشن‌پلن
+        </a>
+        <a href="{{ url_for('projects.project_view', project_id=project.id) }}"
+           class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700">
+          بازگشت به پروژه
+        </a>
+      </div>
+    </div>
+
+    {# Summary bar #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <p class="text-xs text-gray-400 font-bold">تعداد فعالیت</p>
+        <p class="text-2xl font-black text-gray-800 dark:text-white">{{ activities|length }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <p class="text-xs text-gray-400 font-bold">میانگین پیشرفت</p>
+        <p class="text-2xl font-black text-indigo-600">{{ "%.0f"|format(avg_progress) }}%</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <p class="text-xs text-gray-400 font-bold">تکمیل‌شده</p>
+        <p class="text-2xl font-black text-emerald-600">{{ completed_count }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+        <p class="text-xs text-gray-400 font-bold">عقب از برنامه</p>
+        <p class="text-2xl font-black text-rose-600">{{ delayed_count }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs font-bold text-gray-500 uppercase">
+            <tr>
+              <th class="px-4 py-3">کد / عنوان</th>
+              <th class="px-4 py-3">قرارداد</th>
+              <th class="px-4 py-3">شروع برنامه</th>
+              <th class="px-4 py-3">پایان برنامه</th>
+              <th class="px-4 py-3">مدت (روز)</th>
+              <th class="px-4 py-3">پیشرفت</th>
+              <th class="px-4 py-3">وضعیت</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+            {% for a in activities %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-gray-700/30">
+              <td class="px-4 py-3">
+                <div class="font-bold text-gray-800 dark:text-gray-100">{{ a.title }}</div>
+                {% if a.wbs_code %}
+                <div class="text-[11px] text-gray-400 font-mono">{{ a.wbs_code }}</div>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                {{ a.contract.contract_number if a.contract else '—' }}
+              </td>
+              <td class="px-4 py-3 font-mono text-xs">{{ a.baseline_start_date or '—' }}</td>
+              <td class="px-4 py-3 font-mono text-xs">{{ a.baseline_end_date or '—' }}</td>
+              <td class="px-4 py-3">{{ a.duration_days() or '—' }}</td>
+              <td class="px-4 py-3 min-w-[140px]">
+                {% set pct = (a.actual_progress_percentage or 0)|float %}
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full {% if pct >= 100 %}bg-emerald-500{% elif pct >= 50 %}bg-indigo-500{% else %}bg-amber-500{% endif %}"
+                         style="width: {{ pct }}%"></div>
+                  </div>
+                  <span class="text-xs font-bold w-10">{{ "%.0f"|format(pct) }}%</span>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 rounded-lg text-[10px] font-black
+                  {% if a.status == 'completed' %}bg-emerald-50 text-emerald-600
+                  {% elif a.status == 'in_progress' %}bg-indigo-50 text-indigo-600
+                  {% else %}bg-gray-100 text-gray-500{% endif %}">
+                  {{ a.status }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+                هنوز فعالیت زمان‌بندی‌شده‌ای ثبت نشده است.
+                آیتم‌های قراردادی را با تاریخ baseline پر کنید.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-400 text-center">
+      منبع داده: آیتم‌های قراردادی (Contract Items) به‌عنوان فعالیت‌های WBS.
+      برای ویرایش تاریخ و پیشرفت از ماژول آیتم‌ها استفاده کنید.
+    </p>
+  </div>
+</div>
+{% endblock %}

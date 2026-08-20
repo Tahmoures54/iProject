@@ -8,11 +8,10 @@ from wtforms import (
     SelectField,
     DateField,
     DecimalField,
-    IntegerField,
     SubmitField,
     HiddenField,
 )
-from wtforms.validators import DataRequired, Optional, Length, NumberRange
+from wtforms.validators import DataRequired, Optional, Length, NumberRange, ValidationError
 
 
 class ProjectForm(FlaskForm):
@@ -51,6 +50,10 @@ class ProjectForm(FlaskForm):
     )
     remarks = TextAreaField("توضیحات", validators=[Optional()])
     submit = SubmitField("ذخیره")
+
+    def __init__(self, *args, project_id=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._project_id = project_id
 
 
 class InviteToProjectForm(FlaskForm):
@@ -111,7 +114,6 @@ class ActionItemForm(FlaskForm):
 
 
 class ScheduleItemQuickForm(FlaskForm):
-    """Quick edit of schedule dates / progress for a ContractItem."""
     item_id = HiddenField()
     baseline_start_date = DateField("شروع برنامه", validators=[Optional()], format="%Y-%m-%d")
     baseline_end_date = DateField("پایان برنامه", validators=[Optional()], format="%Y-%m-%d")
