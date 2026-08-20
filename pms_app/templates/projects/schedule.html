@@ -14,7 +14,7 @@
           <span class="text-indigo-600">برنامه زمان‌بندی</span>
         </nav>
         <h1 class="text-2xl font-black text-gray-800 dark:text-white">برنامه زمان‌بندی (Schedule)</h1>
-        <p class="text-sm text-gray-500 mt-1">فعالیت‌های WBS / آیتم‌های قراردادی با تاریخ و پیشرفت</p>
+        <p class="text-sm text-gray-500 mt-1">تاریخ‌ها به‌صورت خورشیدی نمایش داده می‌شوند</p>
       </div>
       <div class="flex gap-2">
         <a href="{{ url_for('projects.action_plan', project_id=project.id) }}"
@@ -28,7 +28,6 @@
       </div>
     </div>
 
-    {# Summary bar #}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
         <p class="text-xs text-gray-400 font-bold">تعداد فعالیت</p>
@@ -55,8 +54,8 @@
             <tr>
               <th class="px-4 py-3">کد / عنوان</th>
               <th class="px-4 py-3">قرارداد</th>
-              <th class="px-4 py-3">شروع برنامه</th>
-              <th class="px-4 py-3">پایان برنامه</th>
+              <th class="px-4 py-3">شروع (خورشیدی)</th>
+              <th class="px-4 py-3">پایان (خورشیدی)</th>
               <th class="px-4 py-3">مدت (روز)</th>
               <th class="px-4 py-3">پیشرفت</th>
               <th class="px-4 py-3">وضعیت</th>
@@ -74,8 +73,12 @@
               <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                 {{ a.contract.contract_number if a.contract else '—' }}
               </td>
-              <td class="px-4 py-3 font-mono text-xs">{{ a.baseline_start_date or '—' }}</td>
-              <td class="px-4 py-3 font-mono text-xs">{{ a.baseline_end_date or '—' }}</td>
+              <td class="px-4 py-3 font-mono text-xs" title="{{ a.baseline_start_date or '' }}">
+                {{ a.baseline_start_date|jalali if a.baseline_start_date else '—' }}
+              </td>
+              <td class="px-4 py-3 font-mono text-xs" title="{{ a.baseline_end_date or '' }}">
+                {{ a.baseline_end_date|jalali if a.baseline_end_date else '—' }}
+              </td>
               <td class="px-4 py-3">{{ a.duration_days() or '—' }}</td>
               <td class="px-4 py-3 min-w-[140px]">
                 {% set pct = (a.actual_progress_percentage or 0)|float %}
@@ -100,7 +103,6 @@
             <tr>
               <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                 هنوز فعالیت زمان‌بندی‌شده‌ای ثبت نشده است.
-                آیتم‌های قراردادی را با تاریخ baseline پر کنید.
               </td>
             </tr>
             {% endfor %}
@@ -108,11 +110,6 @@
         </table>
       </div>
     </div>
-
-    <p class="text-xs text-gray-400 text-center">
-      منبع داده: آیتم‌های قراردادی (Contract Items) به‌عنوان فعالیت‌های WBS.
-      برای ویرایش تاریخ و پیشرفت از ماژول آیتم‌ها استفاده کنید.
-    </p>
   </div>
 </div>
 {% endblock %}
