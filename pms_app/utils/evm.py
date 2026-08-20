@@ -1,15 +1,12 @@
 # Path: pms_app/utils/evm.py
 """
 Earned Value Management (EVM) calculation utilities + S-Curve generator.
-
-Standards followed (practical version for construction / contract-based projects):
-- BAC, EV, AC, PV, CV, SV, CPI, SPI, EAC, ETC, VAC, TCPI
-- S-Curve: cumulative PV / EV / AC over time
+Supports Jalali (Solar) labels for charts.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import List, Optional, Sequence, Union
 
@@ -222,15 +219,6 @@ def project_evm(project, as_of: Optional[date] = None) -> EVMResult:
 # ===========================================================================
 
 @dataclass
-class SCurvePoint:
-    label: str
-    date: date
-    pv: float
-    ev: float
-    ac: float
-
-
-@dataclass
 class SCurveData:
     labels: List[str] = field(default_factory=list)
     pv: List[float] = field(default_factory=list)
@@ -249,7 +237,6 @@ class SCurveData:
 
 
 def _month_end(d: date) -> date:
-    """Return last day of the month for date d."""
     if d.month == 12:
         return date(d.year, 12, 31)
     return date(d.year, d.month + 1, 1) - timedelta(days=1)
@@ -259,14 +246,18 @@ def _add_months(d: date, months: int) -> date:
     month = d.month - 1 + months
     year = d.year + month // 12
     month = month % 12 + 1
-    day = min(d.day, [31,
-                      29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
-                      31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+    day = min(
+        d.day,
+        [
+            31,
+            29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28,
+            31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+        ][month - 1],
+    )
     return date(year, month, day)
 
 
 def _linear_cum(bac: Decimal, start: Optional[date], end: Optional[date], as_of: date) -> Decimal:
-    """Linear cumulative value of bac between start and end at as_of."""
     if bac <= 0 or not start or not end or end <= start:
         return Decimal("0")
     if as_of <= start:
@@ -278,32 +269,32 @@ def _linear_cum(bac: Decimal, start: Optional[date], end: Optional[date], as_of:
     return _q(bac * Decimal(elapsed) / Decimal(total_days))
 
 
+def _jalali_label(d: date) -> str:
+    """Month label in Jalali (e.g. 1403/06). Falls back to Gregorian if jdatetime missing."""
+    try:
+        from pms_app.utils.jalali import format_jalali_month
+        return format_jalali_month(d) or d.strftime("%Y-%m")
+    except Exception:
+        return d.strftime("%Y-%m")
+
+
 def generate_s_curve(
     project,
     *,
     months: int = 12,
     as_of: Optional[date] = None,
+    jalali_labels: bool = True,
 ) -> SCurveData:
     """
     Generate S-Curve data points (monthly) for a project.
-
-    Strategy (practical when historical progress snapshots are not stored):
-    - Collect all items from all contracts.
-    - PV: linear distribution of each item BAC between baseline_start → baseline_end
-          (fallback to project start/finish).
-    - EV: assume current progress was achieved linearly from item start to today.
-    - AC: assume actual_cost was incurred linearly from item start to today.
-
-    Returns labels + three series ready for Chart.js.
+    Labels default to Jalali calendar (Solar).
     """
     as_of = as_of or date.today()
 
-    # Collect items
     items = []
     for contract in getattr(project, "contracts", []):
         items.extend(list(getattr(contract, "items", [])))
 
-    # Determine time window
     starts = []
     ends = []
     if project.start_date:
@@ -326,23 +317,20 @@ def generate_s_curve(
 
     start_date = min(starts)
     end_date = max(ends)
-    # extend a bit into future if project is still running
     if end_date < as_of:
         end_date = as_of
 
-    # Build month-end points
     points: List[date] = []
     cursor = date(start_date.year, start_date.month, 1)
     while cursor <= end_date:
         points.append(_month_end(cursor))
         cursor = _add_months(cursor, 1)
-        if len(points) > 60:  # safety
+        if len(points) > 60:
             break
 
     if not points:
         points = [as_of]
 
-    # Pre-compute item parameters
     item_data = []
     for it in items:
         bac = _d(it.adjusted_amount if it.adjusted_amount is not None else it.original_amount)
@@ -375,16 +363,16 @@ def generate_s_curve(
         cum_ac = Decimal("0")
 
         for d in item_data:
-            # PV – full planned curve
             cum_pv += _linear_cum(d["bac"], d["b_start"], d["b_end"], pt)
-
-            # EV & AC – linear from actual/baseline start to today (as_of)
-            # After as_of we freeze at current value
             ref_date = min(pt, as_of)
             cum_ev += _linear_cum(d["ev_final"], d["a_start"], as_of, ref_date)
             cum_ac += _linear_cum(d["ac_final"], d["a_start"], as_of, ref_date)
 
-        labels.append(pt.strftime("%Y-%m"))
+        if jalali_labels:
+            labels.append(_jalali_label(pt))
+        else:
+            labels.append(pt.strftime("%Y-%m"))
+
         date_strs.append(pt.isoformat())
         pv_series.append(float(_q(cum_pv)))
         ev_series.append(float(_q(cum_ev)))
@@ -400,5 +388,4 @@ def generate_s_curve(
 
 
 def project_s_curve(project, **kwargs) -> dict:
-    """Convenience wrapper returning dict for JSON / templates."""
     return generate_s_curve(project, **kwargs).as_dict()
