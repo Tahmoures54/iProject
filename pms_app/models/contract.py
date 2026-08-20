@@ -13,6 +13,9 @@ def utcnow() -> datetime:
 
 
 class Contract(db.Model):
+    """
+    Contract under a project – value, dates, baseline, retention for control.
+    """
     __tablename__ = "contracts"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,7 +27,12 @@ class Contract(db.Model):
         index=True,
     )
 
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    project_id = db.Column(
+        db.Integer,
+        db.ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     contract_number = db.Column(db.String(80), nullable=False, index=True)
     contract_title = db.Column(db.String(200), nullable=False)
@@ -34,11 +42,19 @@ class Contract(db.Model):
     pricing_model = db.Column(db.String(30), nullable=False)
     currency = db.Column(db.String(10), nullable=False)
 
+    # Financial
     original_contract_value = db.Column(db.Numeric(18, 2), nullable=True)
     revised_contract_value = db.Column(db.Numeric(18, 2), nullable=True)
+    retention_percentage = db.Column(db.Numeric(5, 2), nullable=True)  # حسن انجام کار %
+    advance_payment = db.Column(db.Numeric(18, 2), nullable=True)  # پیش‌پرداخت
 
+    # Current plan dates
     start_date = db.Column(db.Date, nullable=True)
     finish_date = db.Column(db.Date, nullable=True)
+
+    # Baseline (approved)
+    baseline_start_date = db.Column(db.Date, nullable=True)
+    baseline_finish_date = db.Column(db.Date, nullable=True)
 
     status = db.Column(db.String(20), nullable=False, default="active", index=True)
     remarks = db.Column(db.Text, nullable=True)
@@ -72,6 +88,15 @@ class Contract(db.Model):
         return Decimal(v) if v is not None else None
 
     @property
+    def contract_bac(self) -> Optional[Decimal]:
+        """Best available contract value as BAC."""
+        if self.revised_contract_value is not None:
+            return Decimal(str(self.revised_contract_value))
+        if self.original_contract_value is not None:
+            return Decimal(str(self.original_contract_value))
+        return None
+
+    @property
     def due_date(self) -> Optional[date]:
         return self.finish_date
 
@@ -90,18 +115,14 @@ class Contract(db.Model):
     def sms_purpose_due_reminder(self, *, days_before: int) -> str:
         return f"CONTRACT_DUE_REMINDER:{int(self.id)}:{int(days_before)}"
 
-    # ------------------------------------------------------------------
-    # Earned Value Management (aggregated from items)
-    # ------------------------------------------------------------------
     def get_evm(self, as_of: Optional[date] = None):
-        """Return aggregated EVMResult for this contract."""
         from pms_app.utils.evm import contract_evm
         return contract_evm(self, as_of=as_of)
 
     @property
     def bac(self) -> Optional[Decimal]:
         result = self.get_evm()
-        return result.bac if result.bac > 0 else None
+        return result.bac if result.bac > 0 else self.contract_bac
 
     @property
     def earned_value(self) -> Optional[Decimal]:
@@ -124,5 +145,4 @@ class Contract(db.Model):
         return self.get_evm().percent_complete
 
     def evm_summary(self) -> dict:
-        """Dict ready for templates / API."""
         return self.get_evm().as_dict()

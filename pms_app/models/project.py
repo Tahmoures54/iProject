@@ -13,6 +13,10 @@ def utcnow() -> datetime:
 
 
 class Project(db.Model):
+    """
+    Project master – multi-tenant, with baseline dates and control fields
+    for EVM / portfolio reporting.
+    """
     __tablename__ = "projects"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +28,7 @@ class Project(db.Model):
         index=True,
     )
 
+    # Identity
     project_code = db.Column(db.String(50), nullable=False, index=True)
     project_name = db.Column(db.String(200), nullable=False, index=True)
     industry = db.Column(db.String(50), nullable=False, index=True)
@@ -31,8 +36,25 @@ class Project(db.Model):
     location = db.Column(db.String(200), nullable=True)
     base_currency = db.Column(db.String(10), nullable=False)
 
+    # Current plan dates
     start_date = db.Column(db.Date, nullable=True)
     finish_date = db.Column(db.Date, nullable=True)
+
+    # Baseline (original approved plan) – for schedule variance at project level
+    baseline_start_date = db.Column(db.Date, nullable=True)
+    baseline_finish_date = db.Column(db.Date, nullable=True)
+
+    # Optional project-level BAC override (if not aggregated only from items)
+    total_budget = db.Column(db.Numeric(18, 2), nullable=True)
+
+    # Reporting / control
+    data_date = db.Column(db.Date, nullable=True)  # as-of date for EVM snapshots
+    manager_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     status = db.Column(db.String(20), nullable=False, default="active", index=True)
     remarks = db.Column(db.Text, nullable=True)
@@ -45,6 +67,7 @@ class Project(db.Model):
         backref=db.backref("projects", lazy="dynamic"),
         lazy="joined",
     )
+    manager = db.relationship("User", foreign_keys=[manager_id], lazy="joined")
 
     members = association_proxy("memberships", "user")
 
@@ -96,16 +119,14 @@ class Project(db.Model):
             f"code={self.project_code!r} name={self.project_name!r}>"
         )
 
-    # ------------------------------------------------------------------
-    # Earned Value Management (project-level aggregation)
-    # ------------------------------------------------------------------
     def get_evm(self, as_of: Optional[date] = None):
-        """Return aggregated EVMResult across all contracts of this project."""
         from pms_app.utils.evm import project_evm
-        return project_evm(self, as_of=as_of)
+        return project_evm(self, as_of=as_of or self.data_date)
 
     @property
     def bac(self) -> Optional[Decimal]:
+        if self.total_budget is not None:
+            return Decimal(str(self.total_budget))
         result = self.get_evm()
         return result.bac if result.bac > 0 else None
 
@@ -134,5 +155,4 @@ class Project(db.Model):
         return self.get_evm().eac
 
     def evm_summary(self) -> dict:
-        """Dict ready for dashboards / API / templates."""
         return self.get_evm().as_dict()
