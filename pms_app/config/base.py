@@ -44,22 +44,17 @@ class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
     # -------------------------------------------------
-    # Database
+    # Database (ایمن‌سازی شده برای Vercel و Local)
     # -------------------------------------------------
     _env_db_uri = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
 
-    # تشخیص محیط Vercel
-    if os.getenv("VERCEL") == "1":
-        # در Vercel حتماً باید DATABASE_URL (PostgreSQL) تنظیم شده باشد
-        if not _env_db_uri:
-            raise RuntimeError("DATABASE_URL must be set on Vercel")
+    if _env_db_uri and _env_db_uri.startswith("postgresql"):
+        # اگر روی ورسل یا تست پستگرس بودیم
         SQLALCHEMY_DATABASE_URI = _env_db_uri
     else:
-        # در محیط محلی اگر DATABASE_URL بود از آن استفاده کن، وگرنه SQLite
-        if _env_db_uri:
-            SQLALCHEMY_DATABASE_URI = _normalize_sqlite_uri(PROJECT_DIR, _env_db_uri)
-        else:
-            SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_PATH.as_posix()}"
+        # در محیط محلی اگر SQLITE تنظیم شده بود آن را نرمالایز کن، وگرنه از پیش‌فرض استفاده کن
+        local_sqlite = _env_db_uri or f"sqlite:///{DB_PATH.as_posix()}"
+        SQLALCHEMY_DATABASE_URI = _normalize_sqlite_uri(PROJECT_DIR, local_sqlite)
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -70,7 +65,7 @@ class BaseConfig:
     OWNER_EMAILS = os.getenv("OWNER_EMAILS", "").strip().lower()
 
     # -------------------------------------------------
-    # Application Branding (نام برنامه و سال نمایش)
+    # Application Branding
     # -------------------------------------------------
     APP_NAME = os.getenv("APP_NAME", "iProject")
     APP_YEAR = os.getenv("APP_YEAR", "۱۴۰۴")
