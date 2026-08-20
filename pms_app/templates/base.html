@@ -12,7 +12,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -22,7 +21,7 @@
           fontFamily: { sans: ["Vazirmatn", "sans-serif"] },
           colors: {
             brand: {
-              50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 
+              50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
               400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
               800: '#1e40af', 900: '#1e3a8a'
             }
@@ -31,9 +30,9 @@
             'fade-in-up': 'fadeInUp 0.3s ease-out',
           },
           keyframes: {
-            fadeInUp: { 
-              '0%': { opacity: '0', transform: 'translateY(20px)' }, 
-              '100%': { opacity: '1', transform: 'translateY(0)' } 
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
             }
           }
         }
@@ -43,8 +42,10 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  
-  <!-- Alpine.js for interactivity -->
+
+  <!-- Jalali Datepicker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@0.9.12/dist/jalalidatepicker.min.css">
+
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   {% block styles %}{% endblock %}
@@ -53,21 +54,17 @@
 
 <body class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300">
 
-  {# منطق دسترسی‌ها بر اساس مدل‌های شما #}
   {% set role_names = [] %}
   {% if current_user.is_authenticated and current_user.roles %}
     {% set role_names = current_user.roles | map(attribute='name') | map('lower') | list %}
   {% endif %}
   {% set is_admin = 'admin' in role_names or 'company_admin' in role_names or current_user.is_owner %}
 
-  <!-- Modern Glass Navbar -->
   <header class="glass-nav sticky top-0 z-40">
     <nav class="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-      
-      <!-- 1. Right Side: Profile (First in DOM = Right in RTL) -->
+
       <div class="flex items-center gap-3 shrink-0 z-50">
         {% if current_user.is_authenticated %}
-          <!-- Profile Dropdown -->
           <div class="relative" x-data="{ open: false }" @click.outside="open = false">
             <button @click="open = !open" class="flex items-center gap-2 p-1 pl-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition border-0 bg-transparent" aria-label="منوی کاربر">
               <img src="https://ui-avatars.com/api/?name={{ current_user.full_name or current_user.email }}&background=2563eb&color=fff" class="w-9 h-9 rounded-full border border-white shadow-sm dark:border-slate-700" alt="Avatar">
@@ -76,10 +73,10 @@
               </span>
               <i class="fa-solid fa-chevron-down text-[10px] text-slate-500 dark:text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            
-            <div x-show="open" 
-                 x-transition:enter="transition ease-out duration-200" 
-                 x-transition:enter-start="opacity-0 translate-y-2" 
+
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-2" style="display: none;">
               <div class="px-3 py-2 text-xs text-slate-400 font-bold uppercase">مدیریت حساب</div>
@@ -105,10 +102,7 @@
         {% endif %}
       </div>
 
-      <!-- 2. Center Side: Menu, Search, Dark Mode (Middle in DOM) -->
       <div class="flex items-center gap-2 md:gap-4 shrink-0">
-        
-        <!-- Desktop Menu (Pill Shape) -->
         <div class="hidden lg:flex items-center gap-1 bg-slate-100/80 dark:bg-slate-800/50 p-1 rounded-2xl backdrop-blur-sm">
           <a href="{{ url_for('main.home') }}" class="nav-link-modern">خانه</a>
           <a href="{{ url_for('projects.projects') }}" class="nav-link-modern">پروژه‌ها</a>
@@ -120,22 +114,18 @@
           {% endif %}
         </div>
 
-        <!-- Search -->
         <div class="hidden md:flex relative shrink-0">
           <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
           <input type="text" placeholder="جستجوی هوشمند..." class="search-input">
         </div>
 
-        <!-- Dark Mode Toggle -->
         <button @click="$store.theme.toggle()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400 shrink-0" aria-label="تغییر تم">
           <i class="fa-solid fa-moon dark:hidden"></i>
           <i class="fa-solid fa-sun hidden dark:inline"></i>
         </button>
       </div>
 
-      <!-- 3. Left Side: Logo (Last in DOM = Left in RTL) -->
       <a class="flex items-center gap-2 no-underline shrink-0" href="{{ url_for('main.home') }}">
-        <!-- تغییر ترتیب: متن در سمت راست، آیکون در سمت چپ -->
         <span class="text-xl font-bold text-slate-800 dark:text-white tracking-tight hidden md:inline">
           {{ config.get('APP_NAME', 'iProject') }}
         </span>
@@ -147,15 +137,14 @@
     </nav>
   </header>
 
-  <!-- Main Content -->
   <main class="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="mb-6 space-y-2">
           {% for category, message in messages %}
-            <div class="p-4 rounded-xl text-sm font-medium border 
-                {% if category == 'error' %}bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20
+            <div class="p-4 rounded-xl text-sm font-medium border
+                {% if category == 'error' or category == 'danger' %}bg-red-50 text-red-600 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20
                 {% elif category == 'success' %}bg-green-50 text-green-600 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20
                 {% else %}bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20{% endif %}">
             {{ message }}
@@ -168,10 +157,9 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Footer -->
   <footer class="bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 py-6 mt-auto transition-colors duration-300">
     <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <p class="text-slate-400 dark:text-slate-500 text-sm">© {{ config.get('APP_YEAR', '۱۵۰۳') }} — پنل مدیریت هوشمند پروژه (iProject)</p>
+      <p class="text-slate-400 dark:text-slate-500 text-sm">© {{ config.get('APP_YEAR', '۱۴۰۳') }} — پنل مدیریت هوشمند پروژه (iProject)</p>
       <div class="flex gap-6 text-sm font-medium">
         <a href="{{ url_for('main.help') }}" class="text-slate-400 dark:text-slate-500 hover:text-brand-600 no-underline">راهنما</a>
         <a href="{{ url_for('main.terms_of_service') }}" class="text-slate-400 dark:text-slate-500 hover:text-brand-600 no-underline">قوانین</a>
@@ -179,12 +167,8 @@
     </div>
   </footer>
 
-  <!-- AI Floating Dock (Centered with side buttons) -->
   <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4">
-    
-    <!-- Chat Window -->
     <div id="chat-window" class="chat-window hidden flex-col w-[90vw] max-w-sm h-[500px] bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-fade-in-up origin-bottom">
-      <!-- Header -->
       <div class="bg-gradient-to-l from-brand-600 to-indigo-500 p-4 text-white flex justify-between items-center shadow-md">
         <span class="font-bold flex items-center gap-2 text-sm">
           <i class="fa-solid fa-sparkles"></i> دستیار هوشمند iProject
@@ -193,19 +177,15 @@
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
-      
-      <!-- Messages -->
       <div id="chat-messages" class="flex-1 p-4 overflow-y-auto text-sm space-y-3 bg-slate-50 dark:bg-slate-900/50 flex flex-col">
         <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tr-sm border border-slate-100 dark:border-slate-700 shadow-sm text-slate-700 dark:text-slate-200 max-w-[85%] self-start">
           سلام <b class="text-brand-600 dark:text-brand-400">{{ current_user.full_name or 'عزیز' }}</b>! 👋<br>چطور می‌تونم در مدیریت پروژه‌ها بهت کمک کنم؟
         </div>
       </div>
-
-      <!-- Input -->
       <div class="p-3 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div class="relative flex items-center">
-          <input type="text" id="ai-input" placeholder="سوالت رو بپرس..." 
-            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-2.5 pr-4 pl-12 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm dark:text-white" 
+          <input type="text" id="ai-input" placeholder="سوالت رو بپرس..."
+            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-2.5 pr-4 pl-12 focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm dark:text-white"
             onkeypress="if(event.key === 'Enter') sendToAI()">
           <button onclick="sendToAI()" class="absolute left-1.5 w-9 h-9 flex items-center justify-center text-white bg-brand-600 hover:bg-brand-700 rounded-full transition shadow-md" aria-label="ارسال">
             <i class="fa-solid fa-paper-plane text-sm"></i>
@@ -214,25 +194,18 @@
       </div>
     </div>
 
-    <!-- The Floating Dock Bar -->
     <div class="dock-container flex items-center gap-1 sm:gap-2 p-2 rounded-full">
-      
-      <!-- Left Buttons -->
       <button class="dock-btn p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600 transition" data-tooltip="نوتیفیکیشن‌ها" aria-label="نوتیفیکیشن‌ها">
         <i class="fa-solid fa-bell text-lg"></i>
       </button>
       <button class="dock-btn p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600 transition hidden sm:flex" data-tooltip="پروژه‌ها" aria-label="پروژه‌ها" onclick="window.location.href='{{ url_for('projects.projects') }}'">
         <i class="fa-solid fa-folder-open text-lg"></i>
       </button>
-
-      <!-- Center AI Button -->
       <button onclick="toggleChat()" class="relative w-16 h-16 -my-8 bg-gradient-to-tr from-brand-600 to-indigo-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-brand-500/40 hover:scale-110 active:scale-95 transition-transform duration-300 border-4 border-white dark:border-slate-800 z-10" aria-label="دستیار هوشمند">
         <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
         <span class="absolute inset-0 rounded-full bg-brand-500 animate-ping opacity-20" style="animation-duration: 2s;"></span>
       </button>
-
-      <!-- Right Buttons -->
-      <button class="dock-btn p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600 transition hidden sm:flex" data-tooltip="ایجاد پروژه" aria-label="ایجاد پروژه" onclick="window.location.href='{{ url_for('projects.projects') }}'">
+      <button class="dock-btn p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600 transition hidden sm:flex" data-tooltip="ایجاد پروژه" aria-label="ایجاد پروژه" onclick="window.location.href='{{ url_for('projects.project_new') }}'">
         <i class="fa-solid fa-plus text-lg"></i>
       </button>
       <button class="dock-btn p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-brand-600 transition" data-tooltip="تنظیمات" aria-label="تنظیمات" onclick="window.location.href='{{ url_for('main.settings') }}'">
@@ -241,8 +214,12 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  <!-- Jalali Datepicker library + init -->
+  <script src="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@0.9.12/dist/jalalidatepicker.min.js"></script>
+  <script src="{{ url_for('static', filename='js/jalali-datepicker.js') }}"></script>
+
   {% block scripts %}{% endblock %}
 </body>
 </html>
