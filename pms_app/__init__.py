@@ -25,12 +25,13 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
     except Exception:
         pass
 
+    # اگر روی ورسل بودیم و متغیری نبود، پیش‌فرض production می‌گیریم
     cfg = (
         config_name
         or env
         or os.getenv("PMS_ENV")
         or os.getenv("FLASK_ENV")
-        or "development"
+        or ("production" if os.getenv("VERCEL") == "1" else "development")
     ).strip().lower()
 
     # ----------------------------
@@ -39,17 +40,14 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
     _setup_logging(app)
 
     # ----------------------------
-    # Load config
+    # Load config (بدون try/except تا خطاها مخفی نشوند)
     # ----------------------------
-    try:
-        if cfg == "production":
-            app.config.from_object("pms_app.config.production.ProductionConfig")
-        elif cfg == "testing":
-            app.config.from_object("pms_app.config.testing.TestingConfig")
-        else:
-            app.config.from_object("pms_app.config.development.DevelopmentConfig")
-    except Exception as e:
-        app.logger.warning("Config load skipped: %s", e)
+    if cfg == "production":
+        app.config.from_object("pms_app.config.production.ProductionConfig")
+    elif cfg == "testing":
+        app.config.from_object("pms_app.config.testing.TestingConfig")
+    else:
+        app.config.from_object("pms_app.config.development.DevelopmentConfig")
 
     # ----------------------------
     # Init extensions
@@ -90,9 +88,8 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
 
     return app
 
-
 # ============================================================
-# Helpers
+# Helpers (بقیه کدهای شما بدون تغییر باقی می‌مانند)
 # ============================================================
 
 def _setup_logging(app: Flask) -> None:
@@ -131,14 +128,6 @@ def _is_debug(app: Flask) -> bool:
 
 
 def _ensure_db_schema_and_seed(app: Flask, *, cfg: str) -> None:
-    """
-    Development safety net:
-    - If DB is empty → create_all()
-    - Then run ensure_rbac_seed()
-
-    Controlled by:
-        PMS_AUTO_CREATE_DB=1
-    """
     if app.config.get("TESTING") is True:
         return
 
