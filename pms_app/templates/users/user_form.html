@@ -1,0 +1,261 @@
+{# Path: pms_app/templates/users/user_form.html #}
+{% extends "base.html" %}
+
+{% block title %}
+  {% if project %}
+    افزودن عضو جدید به {{ project.project_name or project.name }}
+  {% else %}
+    {{ title or "مدیریت حساب کاربری" }}
+  {% endif %}
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <style>
+    :root {
+      --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      --input-focus: #eef2ff;
+    }
+
+    .form-container { max-width: 1000px; margin: 0 auto; padding: 2rem 1rem; }
+    
+    /* Card Styling */
+    .glass-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+
+    /* Section Headers */
+    .form-step-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .step-number {
+      width: 32px; height: 32px;
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.8rem;
+    }
+
+    /* Inputs */
+    .modern-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+    }
+    .modern-input:focus {
+      background: #fff;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px var(--input-focus);
+      outline: none;
+    }
+    
+    .invalid-field { border-color: #ef4444 !important; background: #fef2f2 !important; }
+    .error-text { color: #ef4444; font-size: 0.75rem; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; gap: 4px; }
+
+    /* Custom Checkbox */
+    .custom-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      background: #f1f5f9;
+      border-radius: 12px;
+      transition: background 0.3s;
+    }
+    .custom-switch:has(input:checked) { background: #ecfdf5; color: #059669; }
+
+    /* Button Styling */
+    .btn-save {
+      background: var(--accent-gradient);
+      color: white;
+      padding: 0.8rem 2.5rem;
+      border-radius: 14px;
+      font-weight: 800;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+      transition: all 0.3s;
+    }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container" dir="rtl">
+  <div class="glass-card animate-fadeIn">
+    
+    <div class="p-8 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-black text-slate-900">
+          {% if project %}
+            تخصیص عضو جدید به پروژه
+          {% else %}
+            {{ title or "تنظیمات حساب کاربری" }}
+          {% endif %}
+        </h1>
+        <p class="text-slate-500 text-sm mt-1 font-medium">
+          {% if project %}
+            در حال افزودن کاربر به <span class="text-indigo-600 font-bold">{{ project.project_name or project.name }}</span>
+          {% else %}
+            لطفاً فیلدهای ستاره‌دار را با دقت تکمیل نمایید.
+          {% endif %}
+        </p>
+      </div>
+      
+      <a href="{{ url_for('projects.project_view', project_id=project.id) if project else url_for('users.users') }}" 
+         class="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all font-bold text-xs">
+        <i class="fas fa-arrow-right"></i>
+        بازگشت
+      </a>
+    </div>
+
+    <div class="p-8">
+      {# Flash Alerts #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="mb-6 p-4 rounded-2xl flex items-center gap-3 font-bold text-sm
+                        {{ 'bg-rose-50 text-rose-700 border border-rose-100' if category == 'error' else 'bg-blue-50 text-blue-700 border border-blue-100' }}">
+              <i class="fas {{ 'fa-circle-xmark' if category == 'error' else 'fa-circle-info' }}"></i>
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" novalidate class="space-y-10">
+        {{ form.hidden_tag() }}
+        {% if project %}<input type="hidden" name="project_id" value="{{ project.id }}">{% endif %}
+
+        <section>
+          <div class="form-step-header">
+            <span class="step-number">01</span>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">اطلاعات شناسایی</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">نام و نام خانوادگی <span class="text-rose-500">*</span></label>
+              {{ form.full_name(class="modern-input" + (' invalid-field' if form.full_name.errors else ''), placeholder="مثال: علیرضا محمدی") }}
+              {% for error in form.full_name.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">آدرس ایمیل <span class="text-rose-500">*</span></label>
+              {{ form.email(class="modern-input" + (' invalid-field' if form.email.errors else ''), dir="ltr", placeholder="name@company.com") }}
+              {% for error in form.email.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">نام سازمان / شرکت <span class="text-rose-500">*</span></label>
+              {{ form.company_name(class="modern-input" + (' invalid-field' if form.company_name.errors else ''), placeholder="نام شرکت اصلی") }}
+              {% for error in form.company_name.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">شماره تماس مستقیم <span class="text-rose-500">*</span></label>
+              {{ form.phone(class="modern-input" + (' invalid-field' if form.phone.errors else ''), dir="ltr", placeholder="0912XXXXXXX") }}
+              {% for error in form.phone.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <label class="custom-switch group">
+              {{ form.is_active(class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500") }}
+              <span class="mr-3 text-sm font-bold">حساب کاربری فعال باشد</span>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <div class="form-step-header">
+            <span class="step-number">02</span>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">امنیت و رمز عبور</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">گذرواژه جدید</label>
+              {{ form.password(class="modern-input" + (' invalid-field' if form.password.errors else ''), placeholder="••••••••") }}
+              {% for error in form.password.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+              <p class="text-[10px] text-slate-400 mt-2 italic">حداقل ۸ کاراکتر شامل حروف و اعداد.</p>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">تأیید گذرواژه</label>
+              {{ form.password2(class="modern-input" + (' invalid-field' if form.password2.errors else ''), placeholder="••••••••") }}
+              {% for error in form.password2.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="form-step-header">
+            <span class="step-number">03</span>
+            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">سطح دسترسی و نقش</h3>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">انتخاب نقش‌های کاربر <span class="text-rose-500">*</span></label>
+              {{ form.roles(class="modern-input h-32" + (' invalid-field' if form.roles.errors else ''), size=5) }}
+              {% for error in form.roles.errors %}<p class="error-text"><i class="fas fa-triangle-exclamation"></i> {{ error }}</p>{% endfor %}
+              <p class="text-[10px] text-indigo-500 mt-2 font-bold"><i class="fas fa-info-circle ml-1"></i> برای انتخاب چندگانه کلید Ctrl را نگه دارید.</p>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-black text-slate-500 mr-2">شرکت پیمانکار (در صورت وجود)</label>
+              {{ form.contractor_company(class="modern-input" + (' invalid-field' if form.contractor_company.errors else ''), placeholder="نام شرکت پیمانکار") }}
+              <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100 mt-4">
+                <p class="text-[10px] text-amber-700 leading-5">اگر نقش کاربر را <b>پیمانکار</b> انتخاب می‌کنید، وارد کردن نام شرکت الزامی است.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p class="text-xs text-slate-400 italic font-medium">اطلاعات وارد شده پس از ذخیره، بلافاصله در سیستم اعمال خواهند شد.</p>
+          <div class="flex gap-3 w-full md:w-auto">
+            <a href="{{ url_for('users.users') }}" class="flex-1 md:flex-none text-center px-8 py-3.5 bg-white text-slate-600 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">
+              انصراف
+            </a>
+            <button type="submit" class="flex-1 md:flex-none btn-save">
+              ثبت نهایی اطلاعات
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+  
+  /* Select Multiple Styling */
+  select[multiple] option {
+    padding: 8px 12px;
+    margin: 4px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  select[multiple] option:checked {
+    background: var(--accent-gradient) !important;
+    color: white !important;
+  }
+</style>
+{% endblock %}

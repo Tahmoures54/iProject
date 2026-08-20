@@ -1,0 +1,187 @@
+{# Path: pms_app/templates/items/item_form.html #}
+{% extends "base.html" %}
+
+{% block title %}
+  {{ title or "فرم آیتم" }}{% if contract %} - قرارداد {{ contract.contract_number }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4" dir="rtl">
+  <div class="max-w-5xl mx-auto">
+    
+    <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all">
+      
+      <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <h1 class="text-xl font-bold text-white flex items-center">
+          <i class="fas fa-edit ml-2"></i>
+          {{ title or "مدیریت آیتم" }}
+        </h1>
+        <div class="flex gap-2">
+          {% if contract %}
+            <a href="{{ url_for('items.items', contract_id=contract.id) }}" 
+               class="bg-white/20 hover:bg-white/30 text-white text-sm py-2 px-4 rounded-lg backdrop-blur-md transition">
+              <i class="fas fa-arrow-right ml-1"></i> بازگشت به لیست
+            </a>
+          {% endif %}
+          <a href="{{ url_for('main.dashboard') }}" 
+             class="bg-white/20 hover:bg-white/30 text-white text-sm py-2 px-4 rounded-lg backdrop-blur-md transition">
+            داشبورد
+          </a>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <form method="POST" class="space-y-8">
+          {{ form.hidden_tag() }}
+
+          <section>
+            <div class="flex items-center mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">
+              <span class="w-2 h-6 bg-indigo-500 rounded-full ml-2"></span>
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-white">اطلاعات پایه (Basic Information)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-1">
+                {{ form.title.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                {{ form.title(class="form-input-custom") }}
+              </div>
+              <div class="space-y-1">
+                {{ form.status.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                {{ form.status(class="form-input-custom") }}
+              </div>
+              <div class="space-y-1">
+                {{ form.priority.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                {{ form.priority(class="form-input-custom") }}
+              </div>
+              <div class="space-y-1">
+                {{ form.pms_item_number.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                {{ form.pms_item_number(class="form-input-custom") }}
+              </div>
+              <div class="md:col-span-2 space-y-1">
+                {{ form.description.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                {{ form.description(class="form-input-custom", rows="3") }}
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center mb-4 border-b border-gray-200 dark:border-gray-600 pb-2">
+              <span class="w-2 h-6 bg-blue-500 rounded-full ml-2"></span>
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-white">ساختار شکست کار (WBS Structure)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {% for field in [form.Level1_project_no, form.Level2_sub_project, form.Level3_phase, 
+                              form.Level4_discipline, form.Level5_area_zone, form.Level6_site_location,
+                              form.Level7_equipment_tag, form.Level8_work_package, form.Level9_activity_name] %}
+                <div class="space-y-1">
+                  {{ field.label(class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider") }}
+                  {{ field(class="form-input-custom text-sm") }}
+                </div>
+              {% endfor %}
+              <div class="space-y-1">
+                {{ form.wbs_code.label(class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider") }}
+                {{ form.wbs_code(class="form-input-custom text-sm bg-indigo-50 dark:bg-indigo-900/20") }}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="flex items-center mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">
+              <span class="w-2 h-6 bg-emerald-500 rounded-full ml-2"></span>
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-white">هزینه و پیشرفت (Financial & Progress)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="md:col-span-2">{{ form.currency.label(class="label-style") }}{{ form.currency(class="form-input-custom") }}</div>
+              <div class="md:col-span-2">{{ form.cost_center.label(class="label-style") }}{{ form.cost_center(class="form-input-custom") }}</div>
+              
+              <div>{{ form.original_amount.label(class="label-style") }}{{ form.original_amount(class="form-input-custom") }}</div>
+              <div>{{ form.adjusted_amount.label(class="label-style") }}{{ form.adjusted_amount(class="form-input-custom") }}</div>
+              <div>{{ form.planned_quantity.label(class="label-style") }}{{ form.planned_quantity(class="form-input-custom") }}</div>
+              <div>{{ form.actual_quantity.label(class="label-style") }}{{ form.actual_quantity(class="form-input-custom") }}</div>
+              
+              <div class="md:col-span-2">
+                {{ form.actual_progress_percentage.label(class="label-style") }}
+                <div class="relative">
+                   {{ form.actual_progress_percentage(class="form-input-custom pl-8") }}
+                   <span class="absolute left-3 top-2.5 text-gray-400">%</span>
+                </div>
+              </div>
+              <div class="md:col-span-2">
+                {{ form.risk_level.label(class="label-style") }}
+                {{ form.risk_level(class="form-input-custom") }}
+              </div>
+            </div>
+          </section>
+
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="p-4 bg-orange-50/50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/20">
+              <h3 class="text-orange-700 dark:text-orange-400 font-bold mb-3 flex items-center">
+                <i class="fas fa-calendar-alt ml-2"></i> زمان‌بندی مبنا (Baseline)
+              </h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div>{{ form.baseline_start_date.label(class="label-style") }}{{ form.baseline_start_date(class="form-input-custom", type="date") }}</div>
+                <div>{{ form.baseline_end_date.label(class="label-style") }}{{ form.baseline_end_date(class="form-input-custom", type="date") }}</div>
+              </div>
+            </div>
+            <div class="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/20">
+              <h3 class="text-blue-700 dark:text-blue-400 font-bold mb-3 flex items-center">
+                <i class="fas fa-clock ml-2"></i> زمان‌بندی واقعی (Actual)
+              </h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div>{{ form.actual_start_date.label(class="label-style") }}{{ form.actual_start_date(class="form-input-custom", type="date") }}</div>
+                <div>{{ form.actual_end_date.label(class="label-style") }}{{ form.actual_end_date(class="form-input-custom", type="date") }}</div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            {{ form.remarks.label(class="label-style") }}
+            {{ form.remarks(class="form-input-custom", rows="2", placeholder="توضیحات تکمیلی...") }}
+          </section>
+
+          <div class="pt-6 border-t border-gray-100 dark:border-gray-700">
+            {{ form.submit(class="w-full md:w-max px-12 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all transform hover:-translate-y-1 cursor-pointer") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* استایل‌های اختصاصی فیلدها */
+  .form-input-custom {
+    @apply mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all p-2.5;
+  }
+  
+  .label-style {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  /* اگر Tailwind را از CDN بارگذاری می‌کنید، از کلاس‌های استاندارد زیر استفاده کنید */
+  input, select, textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.6rem;
+    width: 100%;
+    transition: all 0.2s;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  .dark input, .dark select, .dark textarea {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: white;
+  }
+
+  /* تنظیم جهت متن برای فیلدهای انگلیسی */
+  .ltr-input {
+    direction: ltr !important;
+    text-align: left !important;
+  }
+</style>
+{% endblock %}

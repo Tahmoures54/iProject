@@ -1,0 +1,100 @@
+{# Path: pms_app/templates/main/premium_activate.html #}
+{% extends "base.html" %}
+{% block title %}فعال‌سازی اشتراک پریمیوم - سیستم مدیریت پروژه هوشمند{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 md:p-8" dir="rtl">
+    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center animate-fadeIn">
+        
+        <div class="bg-white/80 dark:bg-gray-800/90 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-10 border border-white dark:border-gray-700">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl mb-4 text-yellow-600 dark:text-yellow-400">
+                    <i class="fas fa-crown text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-800 dark:text-white mb-2">ارتقا به پریمیوم</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">کلید اشتراک خود را برای آزادسازی تمام امکانات وارد کنید</p>
+            </div>
+
+            <form method="POST" novalidate class="space-y-5">
+                {{ form.hidden_tag() }}
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 mr-1">نام یا شرکت</label>
+                    {{ form.name(class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none", 
+                                 placeholder="مثال: شرکت توسعه هوشمند") }}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 mr-1">کلید لایسنس (Subscription Key)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                            <i class="fas fa-key"></i>
+                        </span>
+                        {{ form.key(class="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none font-mono", 
+                                     placeholder="XXXX-XXXX-XXXX-XXXX") }}
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-gradient-to-l from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all transform hover:-translate-y-1 active:scale-95">
+                    فعال‌سازی و ارتقا حساب
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="{{ url_for('main.dashboard') }}" class="text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-arrow-right text-xs"></i>
+                    بازگشت به داشبورد مدیریتی
+                </a>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="text-right">
+                <h3 class="text-xl font-black text-indigo-700 dark:text-indigo-400 mb-2 italic">چرا نسخه پریمیوم؟</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm leading-6">با تهیه نسخه حرفه‌ای، محدودیت‌ها را کنار بگذارید و مدیریت پروژه را به سطح جدیدی ببرید.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                {% set perks = [
+                    {'icon': 'fa-cloud-upload-alt', 'title': 'پشتیبان‌گیری ابری', 'desc': 'پشتیبان‌گیری خودکار از دیتابیس در فضای امن.'},
+                    {'icon': 'fa-file-csv', 'title': 'خروجی اکسل و CSV', 'desc': 'گزارش‌گیری حرفه‌ای از وظایف و قراردادها.'},
+                    {'icon': 'fa-chart-line', 'title': 'آنالیز پیشرفته', 'desc': 'نمودارهای تحلیلی پیشرفت فیزیکی و ریالی.'},
+                    {'icon': 'fa-headset', 'title': 'پشتیبانی VIP', 'desc': 'پاسخگویی در کمتر از ۲ ساعت کاری.'}
+                ] %}
+
+                {% for perk in perks %}
+                <div class="flex items-center gap-4 p-4 bg-white/40 dark:bg-gray-800/40 rounded-2xl border border-white dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 transition-all group shadow-sm">
+                    <div class="w-12 h-12 flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+                        <i class="fas {{ perk.icon }} text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-black text-gray-800 dark:text-white">{{ perk.title }}</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ perk.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-3">
+                <i class="fas fa-check-shield text-emerald-600 text-xl"></i>
+                <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 italic">فعال‌سازی آنی پس از تایید کلید اشتراک</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+/* استایل سفارشی برای input لایسنس */
+input::placeholder {
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

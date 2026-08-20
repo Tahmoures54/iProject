@@ -1,0 +1,61 @@
+# Environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+
+# Instance folder (SQLite DB, config)
+instance/
+*.sqlite3
+*.db
+
+# Logs
+logs/
+*.log
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test / coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+
+# Packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Docker
+# (if you want to ignore docker files? Not necessary, Dockerfile and docker-compose should be tracked; but can ignore .env used by compose: .env already)
+.dockerignore? Not necessary.
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Flask instance and migrations cache? 
+# Migrations are tracked; but ignore __pycache__ within migrations
+# Already covered by __pycache__/
+
+# Media? Maybe not ignore static images; but if big images? no.
+
+# Jupyter
+.ipynb_checkpoints/

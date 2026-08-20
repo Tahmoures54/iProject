@@ -1,0 +1,149 @@
+{# Path: pms_app/templates/main/settings.html #}
+{% extends "base.html" %}
+{% block title %}تنظیمات - سیستم مدیریت پروژه هوشمند{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8" dir="rtl">
+
+  <div class="flex items-center gap-3 mb-8">
+    <i class="fas fa-cog text-indigo-600 text-2xl"></i>
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-900">تنظیمات سیستم</h1>
+  </div>
+
+  <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+    <div class="bg-indigo-600 text-white px-6 py-4">
+      <h2 class="text-lg md:text-xl font-semibold flex items-center gap-2">
+        <i class="fas fa-sliders-h"></i>
+        پیکربندی پارامترهای سیستم
+      </h2>
+    </div>
+
+    <div class="p-6">
+
+      {# فلش‌ها: اگر در base.html هم نمایش می‌دهی، این بخش را حذف کن تا دوبار نمایش داده نشود. #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="space-y-3 mb-6">
+            {% for category, message in messages %}
+              <div class="rounded-lg px-4 py-3 border text-sm
+                {% if category == 'success' %}bg-green-50 border-green-200 text-green-800
+                {% elif category == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800
+                {% elif category == 'danger' %}bg-red-50 border-red-200 text-red-800
+                {% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% if form and form.errors %}
+        <div class="rounded-lg px-4 py-3 border border-red-200 bg-red-50 text-red-800 text-sm mb-6 space-y-1">
+          {% for field, errors in form.errors.items() %}
+            {% for error in errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# در ساختار جدید، اگر route settings را با endpoint main.settings داشته باشی بهتر است explicit باشد.
+         اگر نداری، همین POST به همان URL فعلی هم کار می‌کند. #}
+      <form method="POST" class="space-y-6">
+        {{ form.hidden_tag() }}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-white border-b border-gray-200">
+              <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-file-alt text-indigo-600"></i>
+                انواع اسناد
+              </h3>
+            </div>
+            <div class="p-4">
+              {{ form.document_types(
+                class="w-full min-h-28 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-right",
+                placeholder="انواع اسناد را وارد کنید (با کاما جدا کنید)"
+              ) }}
+              <p class="text-xs text-gray-500 mt-2">مثال: برنامه پروژه، گزارش پیشرفت، قرارداد</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-white border-b border-gray-200">
+              <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-project-diagram text-indigo-600"></i>
+                رشته‌ها
+              </h3>
+            </div>
+            <div class="p-4">
+              {{ form.disciplines(
+                class="w-full min-h-28 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-right",
+                placeholder="رشته‌ها را وارد کنید (با کاما جدا کنید)"
+              ) }}
+              <p class="text-xs text-gray-500 mt-2">مثال: ساخت‌وساز، فناوری اطلاعات، مهندسی برق</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-white border-b border-gray-200">
+              <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-building text-indigo-600"></i>
+                شرکت‌ها
+              </h3>
+            </div>
+            <div class="p-4">
+              {{ form.companies(
+                class="w-full min-h-28 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-right",
+                placeholder="شرکت‌ها را وارد کنید (با کاما جدا کنید)"
+              ) }}
+              <p class="text-xs text-gray-500 mt-2">مثال: شرکت الف، شرکت ب، شرکت ج</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-white border-b border-gray-200">
+              <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-tasks text-indigo-600"></i>
+                وضعیت‌های آیتم/وظیفه
+              </h3>
+            </div>
+            <div class="p-4">
+              {{ form.task_statuses(
+                class="w-full min-h-28 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-right",
+                placeholder="وضعیت‌ها را وارد کنید (با کاما جدا کنید)"
+              ) }}
+              <p class="text-xs text-gray-500 mt-2">مثال: open، in_progress، done، blocked</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-center gap-3 pt-2">
+          <button type="submit"
+                  class="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition">
+            <i class="fas fa-save"></i>
+            ذخیره تنظیمات
+          </button>
+
+          <a href="{{ url_for('main.dashboard') }}"
+             class="inline-flex items-center justify-center gap-2 border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition">
+            <i class="fas fa-arrow-right"></i>
+            بازگشت به داشبورد
+          </a>
+        </div>
+      </form>
+
+      {# نکته:
+         مقداردهی اولیه این TextAreaها باید در route انجام شود (form.field.data = ...).
+         پارامتر value=... برای textarea معمولاً اثری ندارد. #}
+
+    </div>
+  </div>
+</div>
+
+<style>
+  [dir="rtl"] textarea::placeholder { text-align: right; }
+</style>
+{% endblock %}

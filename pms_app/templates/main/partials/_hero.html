@@ -1,0 +1,57 @@
+{# Path: pms_app/templates/main/partials/_hero.html #}
+<section class="hero" aria-label="بخش اصلی">
+    <div class="hero-slider" aria-hidden="true">
+        {% set hero_images = [
+            {'src': url_for('static', filename='img/hero/slide-1.jpg'), 'alt': 'مدیریت پروژه'},
+            {'src': url_for('static', filename='img/hero/slide-2.jpg'), 'alt': 'کار تیمی'},
+            {'src': url_for('static', filename='img/hero/slide-3.jpg'), 'alt': 'گزارش‌گیری'},
+            {'src': url_for('static', filename='img/hero/slide-4.jpg'), 'alt': 'موفقیت'}
+        ] %}
+        {% for img in hero_images %}
+        <div class="hero-slide {% if loop.first %}active{% endif %}" data-slide="{{ loop.index0 }}">
+            <img src="{{ img.src }}" alt="{{ img.alt }}"
+                 loading="{{ 'eager' if loop.first else 'lazy' }}"
+                 fetchpriority="{{ 'high' if loop.first else 'auto' }}">
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="hero-overlay" aria-hidden="true"></div>
+
+    <div class="hero-content">
+        <span class="hero-badge">🚀 نسخه جدید ۲۰۲۶</span>
+        <h1>مدیریت پروژه را با <span class="brand">iProject</span> هوشمند کنید</h1>
+        <p>پلتفرم جامع برای تیم‌های مهندسی و بازرگانی؛ از ثبت قراردادها تا پایش پیشرفت</p>
+
+        <div class="cta-buttons">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.register') }}" class="button" aria-label="ثبت‌نام رایگان">
+                    <i class="fas fa-rocket" aria-hidden="true"></i>
+                    شروع رایگان
+                </a>
+                <a href="#benefits" class="button outline">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    مشاهده ویژگی‌ها
+                </a>
+            {% else %}
+                <a href="{{ url_for('main.dashboard') }}" class="button">
+                    <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                    داشبورد من
+                </a>
+                <a href="{{ url_for('projects.projects') }}" class="button outline">
+                    <i class="fas fa-project-diagram" aria-hidden="true"></i>
+                    پروژه‌ها
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="hero-dots" role="tablist" aria-label="اسلایدر تصاویر">
+        {% for i in range(4) %}
+        <button class="hero-dot {% if loop.first %}active{% endif %}"
+                data-slide="{{ i }}"
+                role="tab"
+                aria-label="اسلاید {{ i + 1 }}"></button>
+        {% endfor %}
+    </div>
+</section>

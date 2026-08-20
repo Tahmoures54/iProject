@@ -1,0 +1,30 @@
+{# Path: pms_app/templates/main/partials/_benefits.html #}
+<section id="benefits" class="benefits fade-in-up" aria-label="مزایای iProject">
+    <div class="benefits-background" aria-hidden="true">
+        <img src="{{ url_for('static', filename='img/hero/slide-1.jpg') }}"
+             alt="" loading="lazy">
+    </div>
+
+    <h2>چرا iProject را انتخاب کنیم؟</h2>
+
+    <div class="benefits-grid">
+        {% set benefits = [
+            {'icon': 'fa-chart-line',      'title': 'داشبورد تحلیلی',   'desc': 'همه پروژه‌ها و قراردادها در یک نگاه با نمودارهای تعاملی و آمار لحظه‌ای.'},
+            {'icon': 'fa-file-signature',  'title': 'مدیریت قراردادها', 'desc': 'ثبت دقیق قراردادها، الحاقیه‌ها و صورت‌وضعیت‌ها با محاسبات خودکار.'},
+            {'icon': 'fa-users',           'title': 'همکاری تیمی',      'desc': 'اعضای تیم را اضافه کنید، نقش‌ها را مشخص کنید و آنلاین همکاری نمایید.'},
+            {'icon': 'fa-clock',           'title': 'مدیریت زمان',      'desc': 'زمان‌بندی وظایف، تعیین مهلت‌ها و پیگیری پیشرفت با تقویم یکپارچه.'},
+            {'icon': 'fa-shield-alt',      'title': 'امنیت پیشرفته',    'desc': 'رمزنگاری داده‌ها، احراز هویت دو مرحله‌ای و دسترسی‌های سطح‌بندی شده.'},
+            {'icon': 'fa-mobile-alt',      'title': 'دسترسی موبایل',    'desc': 'نسخه واکنش‌گرا و اپلیکیشن تحت وب برای مدیریت در هر مکان و هر زمان.'},
+            {'icon': 'fa-exchange-alt',    'title': 'بازارچه مصالح',    'desc': 'خرید و فروش مصالح مازاد بین شرکت‌ها؛ کاهش هزینه و بهینه‌سازی موجودی.'},
+            {'icon': 'fa-warehouse',       'title': 'انبار آنلاین',     'desc': 'مدیریت موجودی انبار در همه بخش‌ها با گزارش لحظه‌ای و هشدار کمبود.'}
+        ] %}
+
+        {% for b in benefits %}
+        <article class="benefit-card">
+            <i class="fas {{ b.icon }} icon" aria-hidden="true"></i>
+            <h3>{{ b.title }}</h3>
+            <p>{{ b.desc }}</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>

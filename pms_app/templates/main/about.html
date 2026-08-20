@@ -1,0 +1,135 @@
+{# Path: pms_app/templates/main/about.html #}
+{% extends "base.html" %}
+
+{% block title %}درباره ما - سیستم مدیریت پروژه هوشمند{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-50/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4" dir="rtl">
+    <div class="max-w-4xl mx-auto animate-fadeIn">
+        
+        <div class="bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm p-8 md:p-12 rounded-3xl shadow-2xl border border-indigo-100 dark:border-gray-700 transition-all">
+            
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl mb-6 shadow-inner">
+                    <svg class="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
+                    {{ app_name or "سیستم مدیریت پروژه هوشمند" }}
+                </h1>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-sm font-medium rounded-full border border-indigo-100 dark:border-indigo-800">
+                        نسخه {{ version or "1.0.0" }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="space-y-10">
+                <section class="relative">
+                    <p class="text-gray-600 dark:text-gray-300 text-xl leading-relaxed text-justify">
+                        سیستم <span class="text-indigo-600 dark:text-indigo-400 font-semibold">Smart PMS</span> یک ابزار جامع و قدرتمند برای مدیریت پروژه‌ها، وظایف و تیم‌هاست. این پلتفرم با هدف افزایش بهره‌وری، ایجاد شفافیت کامل و تسهیل همکاری در تیم‌های مدرن طراحی شده است. ما بر این باوریم که با ترکیب هوش و ابزار، هر تیمی توانایی خلق نتایج شگفت‌انگیز را دارد.
+                    </p>
+                </section>
+
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-1 text-white shadow-lg">
+                    <div class="bg-indigo-600 dark:bg-gray-800 rounded-[calc(1rem-1px)] p-6">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-bullseye ml-3 text-indigo-400"></i>
+                            ماموریت ما
+                        </h2>
+                        <p class="text-indigo-100 dark:text-gray-300 text-lg leading-relaxed">
+                            ساده‌سازی فرآیندهای پیچیده مدیریتی از طریق یک رابط کاربری بصری، هوشمند و فوق‌امن. ما ابزاری فراهم کرده‌ایم که نه تنها به مدیران در برنامه‌ریزی دقیق کمک می‌کند، بلکه به تک‌تک اعضای تیم قدرت می‌دهد تا بر روی مهم‌ترین مسائل تمرکز کنند.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-8">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-8 border-r-4 border-indigo-500 pr-4">ویژگی‌های کلیدی سیستم</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="group p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-tachometer-alt text-2xl text-indigo-500"></i>
+                                </div>
+                                <h3 class="mr-4 font-bold text-gray-900 dark:text-white text-lg">داشبورد هوشمند</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">تحلیل لحظه‌ای وضعیت پروژه‌ها و پایش پیشرفت وظایف در یک نمای بصری واحد.</p>
+                        </div>
+
+                        <div class="group p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-tasks text-2xl text-blue-500"></i>
+                                </div>
+                                <h3 class="mr-4 font-bold text-gray-900 dark:text-white text-lg">مدیریت وظایف</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">تعریف، تخصیص هوشمند و پیگیری چرخه‌ی حیات وظایف با جزئیات و پیوست‌های نامحدود.</p>
+                        </div>
+
+                        <div class="group p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-users-cog text-2xl text-purple-500"></i>
+                                </div>
+                                <h3 class="mr-4 font-bold text-gray-900 dark:text-white text-lg">سطوح دسترسی</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">مدیریت دقیق نقش‌های کاربری و کنترل دسترسی‌های سلسله‌مراتبی به بخش‌های حساس.</p>
+                        </div>
+
+                        <div class="group p-6 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-300">
+                            <div class="flex items-center mb-4">
+                                <div class="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-shield-alt text-2xl text-green-500"></i>
+                                </div>
+                                <h3 class="mr-4 font-bold text-gray-900 dark:text-white text-lg">امنیت پیشرفته</h3>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400">رمزنگاری داده‌ها و پشتیبانی از احراز هویت دو مرحله‌ای (2FA) برای حفاظت حداکثری.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-16 pt-10 border-t border-gray-100 dark:border-gray-700">
+                <h4 class="text-2xl font-semibold text-gray-800 dark:text-white mb-6">آماده‌اید تا نظم را به تیم خود هدیه دهید؟</h4>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.dashboard') }}"
+                           class="flex items-center justify-center px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1">
+                            <i class="fas fa-chart-line ml-2"></i>
+                            مشاهده داشبورد مدیریت
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('auth.register') }}"
+                           class="flex items-center justify-center px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1">
+                            <i class="fas fa-rocket ml-2"></i>
+                            شروع رایگان پروژه
+                        </a>
+                        <a href="{{ url_for('auth.login') }}"
+                           class="flex items-center justify-center px-10 py-4 bg-white dark:bg-gray-700 text-indigo-600 dark:text-white font-bold rounded-xl border-2 border-indigo-600 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-gray-600 transition-all">
+                            ورود به حساب کاربری
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        
+        <p class="text-center text-gray-500 dark:text-gray-400 mt-8 text-sm">
+            © {{ current_year or '2024' }} سیستم مدیریت پروژه هوشمند. تمامی حقوق محفوظ است.
+        </p>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+</style>
+{% endblock %}

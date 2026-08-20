@@ -1,0 +1,130 @@
+{# Path: pms_app/templates/main/privacy_policy.html #}
+{% extends "base.html" %}
+
+{% block title %}سیاست حفظ حریم خصوصی - سیستم مدیریت پروژه هوشمند{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300" dir="rtl">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+        
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 p-8 md:p-12 text-center relative">
+            <div class="absolute inset-0 opacity-10">
+                <i class="fas fa-shield-alt text-[10rem] -mr-10 -mt-10"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-4 relative z-10">
+                سیاست حفظ حریم خصوصی
+            </h1>
+            <p class="text-indigo-100 font-medium relative z-10">
+                شفافیت در نحوه مدیریت و محافظت از داده‌های شما اولویت ماست
+            </p>
+            <div class="mt-4 inline-block px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs text-white border border-white/30">
+                آخرین به‌روزرسانی: ۶ اسفند ۱۴۰۳
+            </div>
+        </div>
+
+        <div class="p-8 md:p-12 space-y-12">
+            
+            <section class="animate-fadeIn">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center font-bold">۱</span>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">مقدمه و تعهدات</h2>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-justify">
+                    در سیستم مدیریت پروژه هوشمند (PMS)، ما به حریم خصوصی کاربران خود اهمیت می‌دهیم. این سند توضیح می‌دهد که چگونه اطلاعات شخصی شما جمع‌آوری، استفاده و محافظت می‌شود. استفاده شما از خدمات ما به معنای پذیرش این سیاست‌ها است.
+                </p>
+            </section>
+
+            <section class="animate-fadeIn delay-100">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center font-bold">۲</span>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">چه اطلاعاتی را جمع‌آوری می‌کنیم؟</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-gray-100 dark:border-gray-600">
+                        <h3 class="font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-user-circle"></i> اطلاعات هویتی
+                        </h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">نام، آدرس ایمیل، شماره تماس و اطلاعات شرکت جهت احراز هویت و برقراری ارتباط.</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-gray-100 dark:border-gray-600">
+                        <h3 class="font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-database"></i> داده‌های عملیاتی
+                        </h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">جزئیات پروژه‌ها، قراردادها، فایل‌های بارگذاری شده و وظایف ثبت شده در سیستم.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-indigo-50 dark:bg-indigo-900/10 p-6 md:p-8 rounded-3xl border border-indigo-100 dark:border-indigo-900/30 relative overflow-hidden">
+                <div class="absolute left-0 bottom-0 opacity-5 pointer-events-none">
+                    <i class="fas fa-user-lock text-9xl"></i>
+                </div>
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold">۳</span>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">امنیت و رمزنگاری</h2>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    ما از پروتکل‌های امنیتی پیشرفته (مانند رمزنگاری SSL/TLS) برای محافظت از داده‌های شما در حین انتقال استفاده می‌کنیم. همچنین رمزهای عبور شما به صورت Hash شده ذخیره می‌شوند و حتی مدیران سیستم نیز به آن‌ها دسترسی ندارند.
+                </p>
+                <div class="flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-indigo-400 italic">
+                    <i class="fas fa-shield-check"></i>
+                    توصیه می‌کنیم حتماً «تایید هویت دو مرحله‌ای» خود را فعال کنید.
+                </div>
+            </section>
+
+            <section class="animate-fadeIn">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center font-bold">۴</span>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">استفاده از کوکی‌ها (Cookies)</h2>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed text-justify">
+                    ما از کوکی‌ها برای حفظ نشست (Session) شما و شخصی‌سازی تنظیمات پنل کاربری استفاده می‌کنیم. کوکی‌ها به ما کمک می‌کنند تا متوجه شویم کدام بخش‌های سیستم نیاز به بهبود دارند. شما می‌توانید از طریق تنظیمات مرورگر خود کوکی‌ها را غیرفعال کنید، اما ممکن است برخی عملکردهای سیستم مختل شود.
+                </p>
+            </section>
+
+            <section class="animate-fadeIn">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center font-bold">۵</span>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white">حقوق شما بر روی داده‌ها</h2>
+                </div>
+                <ul class="space-y-3 pr-4">
+                    <li class="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                        حق درخواست مشاهده تمامی داده‌های ذخیره شده.
+                    </li>
+                    <li class="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                        حق درخواست ویرایش یا حذف کامل حساب کاربری و داده‌های مرتبط.
+                    </li>
+                    <li class="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+                        حق لغو اشتراک از خبرنامه‌ها و ایمیل‌های اطلاع‌رسانی.
+                    </li>
+                </ul>
+            </section>
+
+            <div class="pt-8 border-t border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-6">
+                <p class="text-sm text-gray-500 dark:text-gray-400 text-center md:text-right">
+                    سوال یا ابهامی دارید؟ با <a href="{{ url_for('main.help') }}" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">تیم پشتیبانی</a> در تماس باشید.
+                </p>
+                <a href="{{ url_for('main.home') }}"
+                   class="flex items-center gap-2 px-8 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all shadow-sm">
+                    <i class="fas fa-arrow-right text-xs"></i>
+                    بازگشت به خانه
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+.delay-100 { animation-delay: 0.1s; }
+</style>
+{% endblock %}

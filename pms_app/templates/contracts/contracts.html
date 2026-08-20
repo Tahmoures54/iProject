@@ -1,0 +1,207 @@
+{# Path: pms_app/templates/contracts/contracts.html #}
+{% extends "base.html" %}
+
+{% block title %}
+    قراردادها{% if project %} - {{ project.project_name }}{% endif %}
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+    }
+
+    .cta-pulse {
+      position: relative;
+      animation: pmsPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pmsPulse {
+      0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+    }
+
+    .card-hover {
+      transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 5px;
+    }
+
+    .bg-soft-primary { background-color: rgba(13, 110, 253, 0.08); color: #0d6efd; }
+    .bg-soft-success { background-color: rgba(25, 135, 84, 0.08); color: #198754; }
+    .bg-soft-warning { background-color: rgba(255, 193, 7, 0.08); color: #856404; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5" dir="rtl">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <h1 class="h3 fw-bold text-dark mb-2">
+                <i class="fas fa-file-signature text-primary me-2"></i>مدیریت قراردادها
+            </h1>
+            {% if project %}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('projects.projects') }}">پروژه‌ها</a></li>
+                        <li class="breadcrumb-item active">{{ project.project_name }}</li>
+                    </ol>
+                </nav>
+            {% endif %}
+        </div>
+        <div class="col-md-5 text-md-start">
+            <div class="d-flex flex-wrap gap-2 justify-content-md-start">
+                {% if project %}
+                    <a class="btn btn-primary rounded-pill px-4 shadow-sm" href="{{ url_for('contracts.contract_new', project_id=project.id) }}">
+                        <i class="fas fa-plus-circle me-1"></i> قرارداد جدید
+                    </a>
+                {% endif %}
+                <a class="btn btn-light rounded-pill px-4 border" href="{{ url_for('main.dashboard') }}">
+                    <i class="fas fa-home me-1"></i> داشبورد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if not project %}
+        <div class="card border-0 shadow-sm bg-soft-warning mb-4">
+            <div class="card-body d-flex align-items-center">
+                <i class="fas fa-project-diagram fa-2x me-3"></i>
+                <div class="fw-bold">لطفاً برای مشاهده یا ثبت قرارداد، ابتدا یک پروژه را از لیست پروژه‌ها انتخاب کنید.</div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if contracts %}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm p-3 text-center">
+                    <small class="text-muted d-block">کل قراردادها</small>
+                    <span class="h4 fw-bold mb-0">{{ contracts|length }}</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm p-3 text-center">
+                    <small class="text-muted d-block text-success">فعال</small>
+                    <span class="h4 fw-bold mb-0">{{ contracts|selectattr('status', 'equalto', 'active')|list|length }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for c in contracts %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm card-hover overflow-hidden">
+                        <div class="px-3 py-2 d-flex justify-content-between align-items-center {% if c.status == 'active' %}bg-soft-success{% elif c.status == 'on_hold' %}bg-soft-warning{% else %}bg-light{% endif %}">
+                            <span class="small fw-bold">
+                                {{ c.contract_number or "بدون شماره" }}
+                            </span>
+                            <span class="badge {% if c.status == 'active' %}bg-success{% elif c.status == 'on_hold' %}bg-warning text-dark{% else %}bg-secondary{% endif %} rounded-pill">
+                                {% if c.status == 'active' %}فعال{% elif c.status == 'on_hold' %}متوقف{% else %}خاتمه یافته{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold text-dark mb-3">{{ c.contract_title or "قرارداد بدون عنوان" }}</h5>
+                            
+                            <div class="list-group list-group-flush small mb-4">
+                                <div class="list-group-item px-0 bg-transparent d-flex justify-content-between">
+                                    <span class="text-muted"><i class="fas fa-user-tie me-1"></i> پیمانکار:</span>
+                                    <span class="fw-semibold text-truncate ms-2" style="max-width: 150px;">{{ c.contractor_name or "—" }}</span>
+                                </div>
+                                <div class="list-group-item px-0 bg-transparent d-flex justify-content-between">
+                                    <span class="text-muted"><i class="fas fa-coins me-1"></i> مدل قیمت:</span>
+                                    <span>{{ c.pricing_model or "—" }}</span>
+                                </div>
+                                <div class="list-group-item px-0 bg-transparent d-flex justify-content-between">
+                                    <span class="text-muted"><i class="fas fa-calendar-alt me-1"></i> بروزرسانی:</span>
+                                    <span>{{ c.updated_at.strftime("%Y/%m/%d") if c.updated_at else "—" }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-3 pt-3 border-top">
+                                <a href="{{ url_for('items.items', contract_id=c.id) }}" 
+                                   class="btn btn-outline-primary w-100 rounded-pill cta-pulse py-2 fw-bold">
+                                    <i class="fas fa-tasks me-1"></i> مدیریت آیتم‌ها و پیشرفت
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light border-0 d-flex justify-content-around p-2">
+                            <a class="btn btn-link btn-sm text-decoration-none text-muted" title="ویرایش"
+                               href="{{ url_for('contracts.contract_edit', contract_id=c.id) }}">
+                                <i class="fas fa-edit"></i> ویرایش
+                            </a>
+                            
+                            <div class="vr my-2"></div>
+
+                            <a class="btn btn-link btn-sm text-decoration-none text-muted" title="مشاهده جزئیات"
+                               href="{{ url_for('items.items', contract_id=c.id) }}">
+                                <i class="fas fa-eye"></i> مشاهده
+                            </a>
+
+                            {% if current_user.is_authenticated and (current_user.is_owner or current_user.is_company_admin) %}
+                                <div class="vr my-2"></div>
+                                <form method="POST" action="{{ url_for('contracts.contract_delete', contract_id=c.id) }}"
+                                      onsubmit="return confirm('آیا از حذف این قرارداد و تمامی داده‌های مرتبط (WBS و ...) اطمینان کامل دارید؟');"
+                                      class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-link btn-sm text-decoration-none text-danger" title="حذف">
+                                        <i class="fas fa-trash-alt"></i> حذف
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if pagination and pagination.pages > 1 %}
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center shadow-sm">
+                    <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+                        <a class="page-link" href="{{ url_for('contracts.contracts', project_id=project.id, page=pagination.prev_num) if pagination.has_prev else '#' }}">قبلی</a>
+                    </li>
+                    <li class="page-item active"><span class="page-link">{{ pagination.page }}</span></li>
+                    <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+                        <a class="page-link" href="{{ url_for('contracts.contracts', project_id=project.id, page=pagination.next_num) if pagination.has_next else '#' }}">بعدی</a>
+                    </li>
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="card border-0 shadow-sm text-center py-5 mt-4">
+            <div class="card-body">
+                <div class="mb-4">
+                    <span class="display-1 text-light"><i class="fas fa-file-invoice"></i></span>
+                </div>
+                <h4 class="fw-bold text-muted">هنوز هیچ قراردادی ثبت نشده است</h4>
+                <p class="text-muted mb-4">برای شروع مدیریت هزینه‌ها و پیشرفت پروژه، اولین قرارداد را ایجاد کنید.</p>
+                {% if project %}
+                    <a class="btn btn-primary btn-lg px-5 rounded-pill shadow" href="{{ url_for('contracts.contract_new', project_id=project.id) }}">
+                        <i class="fas fa-plus-circle me-1"></i> ایجاد اولین قرارداد
+                    </a>
+                {% else %}
+                    <a class="btn btn-outline-primary btn-lg px-5 rounded-pill" href="{{ url_for('projects.projects') }}">
+                        <i class="fas fa-search me-1"></i> انتخاب پروژه
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

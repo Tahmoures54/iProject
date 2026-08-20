@@ -1,0 +1,261 @@
+/* ============================================================= */
+/* static/css/main.css - Optimized for Modern Tailwind + Alpine   */
+/* ============================================================= */
+
+:root {
+  /* متغیرهای رنگ برای حفظ یکپارچگی (در صورت نیاز به استفاده در JS) */
+  --primary:        #2563eb;
+  --primary-light:  #3b82f6;
+  --primary-dark:   #1d4ed8;
+  --primary-glow:   rgba(37, 99, 235, 0.15);
+  
+  --surface:        #ffffff;
+  --surface-2:      #f8fafc;
+  --border:         #e2e8f0;
+}
+
+/* ============================================================= 
+   1. Base & Typography
+   ============================================================= */
+body {
+  font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  background-color: var(--surface-2);
+  color: #0f172a;
+  line-height: 1.6;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+/* ============================================================= 
+   2. Custom Modern Scrollbar
+   ============================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ============================================================= 
+   3. Glassmorphism Navbar
+   ============================================================= */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-nav {
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+}
+
+/* ============================================================= 
+   4. Navigation & Dropdown Components
+   ============================================================= */
+.nav-link-modern {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-decoration: none !important;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.dark .nav-link-modern { color: #94a3b8; }
+
+.nav-link-modern:hover, .nav-link-modern.active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.dark .nav-link-modern:hover, .dark .nav-link-modern.active {
+  background: #1e293b;
+  color: #3b82f6;
+}
+
+/* Custom Search Input */
+.search-input {
+  background-color: #f1f5f9;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  font-size: 0.875rem;
+  width: 12rem;
+  transition: all 0.3s ease-in-out;
+  outline: none;
+}
+
+.dark .search-input {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 2px #3b82f6;
+  width: 16rem;
+}
+
+/* Dropdown Items */
+.dropdown-item-modern {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #334155;
+  text-decoration: none;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.dark .dropdown-item-modern { color: #e2e8f0; }
+
+.dropdown-item-modern:hover {
+  background-color: #f8fafc;
+}
+
+.dark .dropdown-item-modern:hover {
+  background-color: #334155;
+}
+
+/* ============================================================= 
+   5. Floating Dock (AI Widget) - The Core Feature
+   ============================================================= */
+.dock-container {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dark .dock-container {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(51, 65, 85, 0.9);
+}
+
+/* Modern Tooltip for Dock Buttons */
+.dock-btn {
+  position: relative;
+}
+
+.dock-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1e293b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.dark .dock-btn::after {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.dock-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Chat Window */
+.chat-window {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Chat Bubbles */
+.chat-bubble-user {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  border-radius: 1rem 1rem 0 1rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.chat-bubble-bot {
+  background: #ffffff;
+  color: #334155;
+  border-radius: 1rem 1rem 1rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .chat-bubble-bot {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+/* ============================================================= 
+   6. Utility Animations
+   ============================================================= */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+/* Pulse glow for AI button */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+}
+
+.ai-button-glow {
+  animation: glowPulse 2s infinite;
+}
+
+/* ============================================================= 
+   7. Responsive Helpers
+   ============================================================= */
+@media (max-width: 768px) {
+  .search-input { display: none; }
+  
+  .dock-container {
+    padding: 0.5rem;
+  }
+}

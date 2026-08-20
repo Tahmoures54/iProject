@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}لغو اشتراک{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+    <h2>لغو اشتراک</h2>
+    <p>آیا مطمئن هستید که می‌خواهید اشتراک خود را لغو کنید؟</p>
+    <a href="{{ url_for('billing.manage') }}" class="btn btn-secondary">بازگشت</a>
+</div>
+{% endblock %}

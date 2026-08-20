@@ -1,0 +1,303 @@
+{# Path: pms_app/templates/users/users.html #}
+{% extends "base.html" %}
+
+{% block title %}مدیریت کاربران پلتفرم{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <style>
+    :root {
+      --primary-soft: #eef2ff;
+      --primary-accent: #4f46e5;
+      --success-glow: rgba(34, 197, 94, 0.15);
+      --danger-glow: rgba(239, 68, 68, 0.1);
+    }
+
+    body { background-color: #f8fafc; color: #1e293b; }
+
+    /* Card & Layout */
+    .user-container { 
+      background: white; 
+      border-radius: 1.5rem; 
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Toolbar Styling */
+    .toolbar-gradient {
+      background: linear-gradient(to right, #ffffff, #f1f5f9);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Modern Table */
+    .table-modern { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+    .table-modern thead th { 
+      font-size: 0.75rem; 
+      font-weight: 800; 
+      color: #64748b; 
+      text-transform: uppercase; 
+      padding: 1rem;
+      border: none;
+    }
+    .table-modern tbody tr { 
+      background-color: white; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .table-modern tbody tr:hover { 
+      transform: scale(1.005); 
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04);
+      z-index: 10;
+    }
+    .table-modern td { padding: 1.25rem 1rem; vertical-align: middle; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+    .table-modern td:first-child { border-right: 1px solid #f1f5f9; border-top-right-radius: 1rem; border-bottom-right-radius: 1rem; }
+    .table-modern td:last-child { border-left: 1px solid #f1f5f9; border-top-left-radius: 1rem; border-bottom-left-radius: 1rem; }
+
+    /* Badges */
+    .badge-custom { padding: 0.4rem 0.8rem; border-radius: 0.75rem; font-size: 0.7rem; font-weight: 700; }
+    .plan-gold { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+    .plan-silver { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    
+    .status-active { background: #f0fdf4; color: #166534; }
+    .status-inactive { background: #fef2f2; color: #991b1b; }
+
+    /* Search Highlight */
+    .user-mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; }
+    
+    .action-btn {
+      width: 32px; height: 32px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 10px; transition: all 0.2s;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<main class="container py-5" dir="rtl">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
+    <div>
+      <h1 class="h3 font-black text-slate-900 mb-2">مدیریت اعضا</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}" class="text-decoration-none text-muted">داشبورد</a></li>
+          <li class="breadcrumb-item active font-bold text-primary">کاربران</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('users.user_new') }}" class="btn btn-primary px-4 py-2 rounded-4 shadow-sm font-bold">
+        <i class="fas fa-plus-circle ms-2"></i>افزودن کاربر جدید
+      </a>
+    </div>
+  </div>
+
+  <div class="user-container p-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ 'danger' if cat=='error' else 'primary' }} border-0 rounded-4 mb-4 font-bold shadow-sm">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="toolbar-gradient mb-4">
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="position-relative">
+            <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            <input id="userSearch" type="text" class="form-control ps-5 py-2 border-0 shadow-sm rounded-3" 
+                   placeholder="جستجو در نام، ایمیل، شرکت یا شماره تماس...">
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+            <select id="roleFilter" class="form-select border-0 shadow-sm rounded-3 w-auto font-bold text-muted">
+              <option value="all">همه نقش‌ها</option>
+            </select>
+            <select id="planFilter" class="form-select border-0 shadow-sm rounded-3 w-auto font-bold text-muted">
+              <option value="all">همه پلن‌ها</option>
+              <option value="free">رایگان</option>
+              <option value="bronze">برنزی</option>
+              <option value="silver">نقره‌ای</option>
+              <option value="gold">طلایی</option>
+            </select>
+            <button id="resetFilters" class="btn btn-light rounded-3 px-3 shadow-sm border">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <div id="resultsCount" class="bg-indigo-600 text-white px-3 py-2 rounded-3 font-bold text-xs d-flex align-items-center">
+              در حال بارگذاری...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table-modern" id="usersTable">
+        <thead>
+          <tr>
+            <th>پروفایل و نام</th>
+            <th>اطلاعات تماس</th>
+            <th>سازمان</th>
+            <th>پلن و اشتراک</th>
+            <th class="text-center">وضعیت</th>
+            <th>سطح دسترسی</th>
+            <th class="text-start">مدیریت</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            {% set sub = subs_map.get(u.id) if subs_map is defined else none %}
+            {% set plan = (sub.plan|lower if sub and sub.plan else 'free') %}
+            <tr data-search="{{ (u.full_name or '')|lower }} {{ u.email|lower }} {{ (u.company_name or '')|lower }} {{ u.phone or '' }}" 
+                data-role="{{ u.roles|map(attribute='title')|join(',')|lower }}"
+                data-plan="{{ plan }}"
+                data-active="{{ '1' if u.is_active else '0' }}">
+              
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center font-bold shadow-sm" style="width: 40px; height: 40px; font-size: 0.8rem;">
+                    {{ u.full_name[0]|upper if u.full_name else 'U' }}
+                  </div>
+                  <div class="d-flex flex-col">
+                    <span class="font-black text-slate-800 js-searchable" data-orig="{{ u.full_name or 'کاربر بی‌نام' }}">{{ u.full_name or 'کاربر بی‌نام' }}</span>
+                    <span class="text-muted" style="font-size: 0.65rem;">ID: #{{ u.id }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <div class="d-flex flex-column gap-1">
+                  <span class="text-slate-600 font-medium js-searchable" data-orig="{{ u.email }}" dir="ltr">{{ u.email }}</span>
+                  <span class="text-muted js-searchable" data-orig="{{ u.phone or '---' }}" style="font-size: 0.75rem;">{{ u.phone or '---' }}</span>
+                </div>
+              </td>
+
+              <td class="js-searchable font-bold text-slate-500" data-orig="{{ u.company_name or 'ثبت نشده' }}">
+                {{ u.company_name or 'ثبت نشده' }}
+              </td>
+
+              <td>
+                <span class="badge-custom plan-{{ 'gold' if plan=='gold' else 'silver' }}">
+                  {{ {'free':'رایگان','bronze':'برنزی','silver':'نقره‌ای','gold':'طلایی'}.get(plan, plan) }}
+                </span>
+                {% if sub.status %}<div class="text-muted mt-1" style="font-size: 0.65rem;">{{ sub.status }}</div>{% endif %}
+              </td>
+
+              <td class="text-center">
+                <span class="badge-custom {{ 'status-active' if u.is_active else 'status-inactive' }}">
+                  {{ 'فعال' if u.is_active else 'غیرفعال' }}
+                </span>
+              </td>
+
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  {% for r in u.roles %}
+                    <span class="badge bg-slate-100 text-slate-600 border px-2 py-1 rounded-2 js-searchable" style="font-size: 0.65rem;" data-orig="{{ r.title }}">
+                      {{ r.title }}
+                    </span>
+                  {% endfor %}
+                </div>
+              </td>
+
+              <td class="text-start">
+                <div class="d-flex gap-2 justify-content-end">
+                  <a href="{{ url_for('users.user_edit', user_id=u.id) }}" class="action-btn bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" title="ویرایش">
+                    <i class="fas fa-pen text-xs"></i>
+                  </a>
+                  <form method="POST" action="{{ url_for('users.user_delete', user_id=u.id) }}" class="d-inline" onsubmit="return confirm('حذف کاربر دائمی است. مطمئن هستید؟')">
+                    {% if csrf_token %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                    <button class="action-btn border-0 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white" title="حذف">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-5 bg-light p-3 rounded-4">
+      <span class="text-muted font-bold text-xs">صفحه {{ pagination.page }} از {{ pagination.pages }}</span>
+      <div class="btn-group gap-1">
+        <a href="{{ url_for('users.users', page=pagination.prev_num) if pagination.has_prev else '#' }}" 
+           class="btn btn-white border rounded-3 px-3 py-1 font-bold text-xs {{ 'disabled' if not pagination.has_prev }}">قبلی</a>
+        <a href="{{ url_for('users.users', page=pagination.next_num) if pagination.has_next else '#' }}" 
+           class="btn btn-white border rounded-3 px-3 py-1 font-bold text-xs {{ 'disabled' if not pagination.has_next }}">بعدی</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('userSearch');
+  const roleFilter = document.getElementById('roleFilter');
+  const planFilter = document.getElementById('planFilter');
+  const resetBtn = document.getElementById('resetFilters');
+  const counter = document.getElementById('resultsCount');
+  const rows = Array.from(document.querySelectorAll('#usersTable tbody tr'));
+
+  // Auto-populate Role Filter
+  const roles = new Set();
+  rows.forEach(row => {
+    row.dataset.role.split(',').forEach(r => { if(r.trim()) roles.add(r.trim()) });
+  });
+  roles.forEach(role => {
+    const opt = document.createElement('option');
+    opt.value = role; opt.textContent = role;
+    roleFilter.appendChild(opt);
+  });
+
+  function update() {
+    const q = searchInput.value.toLowerCase();
+    const role = roleFilter.value.toLowerCase();
+    const plan = planFilter.value.toLowerCase();
+    let visible = 0;
+
+    rows.forEach(row => {
+      const textMatch = row.dataset.search.includes(q);
+      const roleMatch = role === 'all' || row.dataset.role.includes(role);
+      const planMatch = plan === 'all' || row.dataset.plan === plan;
+      
+      const show = textMatch && roleMatch && planMatch;
+      row.style.display = show ? '' : 'none';
+      if(show) {
+        visible++;
+        highlight(row, q);
+      }
+    });
+    counter.textContent = `${visible} کاربر یافت شد`;
+  }
+
+  function highlight(row, q) {
+    row.querySelectorAll('.js-searchable').forEach(el => {
+      const original = el.dataset.orig;
+      if (!q) { el.textContent = original; return; }
+      const regex = new RegExp(`(${q})`, 'gi');
+      el.innerHTML = original.replace(regex, '<mark class="user-mark">$1</mark>');
+    });
+  }
+
+  searchInput.addEventListener('input', update);
+  roleFilter.addEventListener('change', update);
+  planFilter.addEventListener('change', update);
+  resetBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    roleFilter.value = 'all';
+    planFilter.value = 'all';
+    update();
+  });
+
+  update(); // Initial count
+});
+</script>
+{% endblock %}

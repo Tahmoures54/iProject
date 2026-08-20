@@ -1,0 +1,28 @@
+{# Path: pms_app/templates/main/partials/_testimonials.html #}
+<section class="testimonials fade-in-up" aria-label="نظرات مشتریان">
+    <h2>مشتریان ما چه می‌گویند؟</h2>
+
+    <div class="testimonials-grid">
+        {% set testimonials = [
+            {'text': 'iProject سرعت مدیریت پروژه‌های ما را دو برابر کرد. رابط ساده و کاربردی است.',
+             'name': 'مهندس رضایی', 'role': 'مدیر پروژه، شرکت آبان', 'initial': 'ر'},
+            {'text': 'ماژول بازارچه مصالح یک انقلاب است! توانستیم مصالح مازاد را به راحتی بفروشیم.',
+             'name': 'خانم موسوی',  'role': 'مدیر تامین، هلدینگ پارس', 'initial': 'م'},
+            {'text': 'گزارش‌های دقیق و real-time به ما در تصمیم‌گیری‌های سریع کمک زیادی می‌کند.',
+             'name': 'دکتر احمدی',  'role': 'مدیرعامل، مهندسین مشاور نیک', 'initial': 'ا'}
+        ] %}
+
+        {% for t in testimonials %}
+        <article class="testimonial-card">
+            <p class="testimonial-text">{{ t.text }}</p>
+            <div class="testimonial-author">
+                <div class="testimonial-avatar" aria-hidden="true">{{ t.initial }}</div>
+                <div>
+                    <div class="testimonial-name">{{ t.name }}</div>
+                    <div class="testimonial-role">{{ t.role }}</div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>

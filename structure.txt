@@ -1,0 +1,247 @@
+iProject:
+|   .dockerignore
+|   .env
+|   .env.example
+|   .gitignore
+|   app.py
+|   app_icon.ico
+|   docker-compose.yml
+|   Dockerfile
+|   eagle.jpg
+|   fix_tests.py
+|   LICENSE
+|   Makefile
+|   optimize_images.py
+|   pytest.ini
+|   README.md
+|   requirements.txt
+|   structure.txt
+|   
++---deploy
+|   \---nginx
+|       |   nginx.conf
+|       |   
+|       \---ssl
+|               .gitkeep
+|               
++---instance
++---logs
+|       app.log
+|       
++---migrations
+|   |   alembic.ini
+|   |   env.py
+|   |   README
+|   |   script.py.mako
+|   |   
+|   \---versions
+|           eb596cd712d0_initial.py
+|           
++---pms_app
+|   |   extensions.py
+|   |   __init__.py
+|   |   
+|   +---blueprints
+|   |   |   __init__.py
+|   |   |   
+|   |   +---api
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---auth
+|   |   |   |   forms.py
+|   |   |   |   routes.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---helpers
+|   |   |           captcha.py
+|   |   |           security.py
+|   |   |           sms_notifier.py
+|   |   |           subscription.py
+|   |   |           tokens.py
+|   |   |           two_factor.py
+|   |   |           __init__.py
+|   |   |           
+|   |   +---billing
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---contracts
+|   |   |       forms.py
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---items
+|   |   |       forms.py
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---main
+|   |   |       forms.py
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---projects
+|   |   |       forms.py
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---reports
+|   |   |       forms.py
+|   |   |       routes.py
+|   |   |       __init__.py
+|   |   |       
+|   |   \---users
+|   |           forms.py
+|   |           routes.py
+|   |           __init__.py
+|   |           
+|   +---config
+|   |       base.py
+|   |       development.py
+|   |       production.py
+|   |       testing.py
+|   |       __init__.py
+|   |       
+|   +---middleware
+|   |       error_handler.py
+|   |       request_logger.py
+|   |       __init__.py
+|   |       
+|   +---models
+|   |       association.py
+|   |       company.py
+|   |       contract.py
+|   |       item.py
+|   |       plan.py
+|   |       project.py
+|   |       project_membership.py
+|   |       report.py
+|   |       role.py
+|   |       sms_log.py
+|   |       subscription.py
+|   |       user.py
+|   |       __init__.py
+|   |       
+|   +---schemas
+|   |       billing_schema.py
+|   |       project_schema.py
+|   |       user_schema.py
+|   |       __init__.py
+|   |       
+|   +---services
+|   |       auth_service.py
+|   |       billing_service.py
+|   |       contract_service.py
+|   |       item_service.py
+|   |       project_service.py
+|   |       report_service.py
+|   |       sms_service.py
+|   |       user_service.py
+|   |       __init__.py
+|   |       
+|   +---static
+|   |   +---css
+|   |   |       home.css
+|   |   |       main.css
+|   |   |       
+|   |   +---img
+|   |   |   \---hero
+|   |   |           eagle.jpg
+|   |   |           slide-1.jpg
+|   |   |           slide-2.jpg
+|   |   |           slide-3.jpg
+|   |   |           slide-4.jpg
+|   |   |           
+|   |   \---js
+|   |           home.js
+|   |           main.js
+|   |           
+|   +---templates
+|   |   |   base.html
+|   |   |   
+|   |   +---auth
+|   |   |       change_password.html
+|   |   |       enable_2fa.html
+|   |   |       forgot_password.html
+|   |   |       login.html
+|   |   |       signup.html
+|   |   |       verify_2fa.html
+|   |   |       
+|   |   +---billing
+|   |   |       cancel.html
+|   |   |       manage.html
+|   |   |       pricing.html
+|   |   |       success.html
+|   |   |       
+|   |   +---contracts
+|   |   |       contracts.html
+|   |   |       contract_form.html
+|   |   |       
+|   |   +---errors
+|   |   |       404.html
+|   |   |       500.html
+|   |   |       
+|   |   +---items
+|   |   |       items.html
+|   |   |       item_form.html
+|   |   |       
+|   |   +---main
+|   |   |   |   about.html
+|   |   |   |   dashboard.html
+|   |   |   |   help.html
+|   |   |   |   home.html
+|   |   |   |   premium_activate.html
+|   |   |   |   privacy_policy.html
+|   |   |   |   settings.html
+|   |   |   |   terms_of_service.html
+|   |   |   |   
+|   |   |   \---partials
+|   |   |           _benefits.html
+|   |   |           _faq.html
+|   |   |           _final_cta.html
+|   |   |           _hero.html
+|   |   |           _how_it_works.html
+|   |   |           _stats.html
+|   |   |           _testimonials.html
+|   |   |           
+|   |   +---projects
+|   |   |       projects.html
+|   |   |       project_form.html
+|   |   |       project_members.html
+|   |   |       project_view.html
+|   |   |       
+|   |   +---reports
+|   |   |       reports.html
+|   |   |       
+|   |   \---users
+|   |           manage_access.html
+|   |           owner_dashboard.html
+|   |           users.html
+|   |           user_form.html
+|   |           
+|   \---utils
+|           entitlements.py
+|           helpers.py
+|           plans.py
+|           security.py
+|           sms.py
+|           __init__.py
+|           
++---scripts
+|       create_admin.py
+|       seed_db.py
+|       
+\---tests
+        conftest.py
+        factories.py
+        test_auth.py
+        test_billing.py
+        test_contracts.py
+        test_items.py
+        test_models.py
+        test_projects.py
+        test_reports.py
+        test_users.py
+        __init__.py
+        

@@ -1,0 +1,350 @@
+{# Path: pms_app/templates/items/items.html #}
+{% extends "base.html" %}
+{% block title %}
+مدیریت آیتم‌ها: {{ contract.contract_number if contract is defined else (project.project_code if project is defined else '') }}
+{% endblock %}
+{% block content %}
+{% set c = contract if contract is defined else None %}
+<div class="space-y-8 p-6 md:p-10 max-w-screen-2xl mx-auto bg-gradient-to-br from-indigo-50 to-white rounded-3xl shadow-xl border border-indigo-200" dir="rtl">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-center gap-6 animate-fade-in">
+    <div>
+      <h2 class="text-3xl md:text-4xl font-extrabold text-indigo-900 tracking-tight drop-shadow-md">
+        مدیریت آیتم‌ها
+      </h2>
+      {% if c %}
+        <p class="text-lg md:text-xl text-indigo-600 mt-3 font-medium">
+          قرارداد:
+          <span class="font-semibold text-indigo-800">
+            {{ c.contract_title }} ({{ c.contract_number }})
+          </span>
+        </p>
+      {% endif %}
+    </div>
+    <a href="{{ url_for('main.dashboard') }}"
+       class="text-base text-indigo-700 hover:text-indigo-900 font-semibold transition-colors duration-200 flex items-center">
+      <i class="fas fa-arrow-left ml-2"></i>
+      بازگشت به داشبورد
+    </a>
+  </div>
+
+  <!-- Operations -->
+  <div class="bg-white shadow-2xl rounded-3xl p-8 animate-slide-up border border-indigo-100">
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
+      <h3 class="text-2xl font-bold text-indigo-800">عملیات</h3>
+      <div class="flex flex-wrap gap-4">
+        {% if c %}
+          <button type="button" onclick="openImportModal()" class="btn btn-success flex items-center shadow-lg">
+            <i class="fas fa-file-import ml-3"></i>
+            ورود از اکسل
+          </button>
+          <a href="{{ url_for('items.items_template_xlsx', contract_id=c.id) }}"
+             class="btn btn-secondary flex items-center shadow-lg">
+            <i class="fas fa-download ml-3"></i>
+            دانلود قالب اکسل
+          </a>
+          <a href="{{ url_for('items.items_export', contract_id=c.id) }}"
+             class="btn btn-info flex items-center shadow-lg">
+            <i class="fas fa-file-export ml-3"></i>
+            خروجی CSV
+          </a>
+          <a href="{{ url_for('items.item_new', contract_id=c.id) }}"
+             class="btn btn-primary flex items-center shadow-lg">
+            <i class="fas fa-plus ml-3"></i>
+            آیتم جدید
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar (smaller) -->
+  <div class="bg-white shadow-2xl rounded-3xl p-6 animate-slide-up delay-100 border border-indigo-100">
+    <h3 class="text-xl md:text-2xl font-bold text-indigo-800 mb-4 flex items-center">
+      <i class="fas fa-search ml-3 text-indigo-600"></i>
+      جستجو در آیتم‌ها
+    </h3>
+    <div class="flex items-center gap-4">
+      <input type="text"
+             id="searchInput"
+             value="{{ q|default('') }}"
+             placeholder="جستجو در همه ستون‌ها..."
+             class="form-input w-full md:w-1/3 py-2 px-3 text-sm border-2 border-indigo-200 focus:border-indigo-500 transition-all duration-300 rounded-lg shadow-sm">
+      <div class="text-sm text-indigo-600 hidden md:block">جستجو سریع — تایپ کنید تا جدول فیلتر شود</div>
+    </div>
+  </div>
+
+  <!-- Items Table (bigger area & taller) -->
+  <div class="bg-white shadow-2xl rounded-3xl overflow-hidden animate-slide-up delay-200 border border-indigo-100">
+    <div class="overflow-x-auto overflow-y-auto max-h-[900px] min-h-[480px] custom-scrollbar">
+      <table class="min-w-full text-base border-collapse excel-table" dir="ltr">
+        <thead class="bg-indigo-200 sticky top-0 z-10 shadow-md">
+          <tr>
+            <th class="th-cell">ID</th>
+            <th class="th-cell">Title</th>
+            <th class="th-cell">Level1_project_no</th>
+            <th class="th-cell">Level2_sub_project</th>
+            <th class="th-cell">Level3_phase</th>
+            <th class="th-cell">Level4_discipline</th>
+            <th class="th-cell">Level5_area_zone</th>
+            <th class="th-cell">Level6_site_location</th>
+            <th class="th-cell">Level7_equipment_tag</th>
+            <th class="th-cell">Level8_work_package</th>
+            <th class="th-cell">Level9_activity_name</th>
+            <th class="th-cell">pms_item_number</th>
+            <th class="th-cell">zone</th>
+            <th class="th-cell">phase</th>
+            <th class="th-cell">area</th>
+            <th class="th-cell">discipline</th>
+            <th class="th-cell">work_package</th>
+            <th class="th-cell">wbs_code</th>
+            <th class="th-cell">boq_item_code</th>
+            <th class="th-cell">activity_id</th>
+            <th class="th-cell">equipment_number</th>
+            <th class="th-cell">unit_of_measure</th>
+            <th class="th-cell">tag_number</th>
+            <th class="th-cell">currency</th>
+            <th class="th-cell">cost_center</th>
+            <th class="th-cell">original_amount</th>
+            <th class="th-cell">adjusted_amount</th>
+            <th class="th-cell">weight_factor</th>
+            <th class="th-cell">planned_quantity</th>
+            <th class="th-cell">actual_quantity</th>
+            <th class="th-cell">actual_progress_percentage</th>
+            <th class="th-cell">estimated_duration</th>
+            <th class="th-cell">actual_cost</th>
+            <th class="th-cell">cost_category</th>
+            <th class="th-cell">funding_source</th>
+            <th class="th-cell">resource_assignment</th>
+            <th class="th-cell">status</th>
+            <th class="th-cell">priority</th>
+            <th class="th-cell">risk_level</th>
+            <th class="th-cell">baseline_start_date</th>
+            <th class="th-cell">baseline_end_date</th>
+            <th class="th-cell">actual_start_date</th>
+            <th class="th-cell">actual_end_date</th>
+            <th class="th-cell">is_milestone</th>
+            <th class="th-cell">is_common</th>
+            <th class="th-cell">responsible_owner_id</th>
+            <th class="th-cell">remarks</th>
+            <th class="th-cell">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="item-table-body" class="divide-y divide-indigo-100">
+          {% for item in items %}
+            <tr class="hover:bg-indigo-50 transition-colors duration-300 cursor-pointer group" onclick="highlightRow(this)">
+              <td class="td-cell font-medium text-indigo-900">{{ item.id }}</td>
+              <td class="td-cell">{{ item.title or '-' }}</td>
+              <td class="td-cell">{{ item.Level1_project_no or '-' }}</td>
+              <td class="td-cell">{{ item.Level2_sub_project or '-' }}</td>
+              <td class="td-cell">{{ item.Level3_phase or '-' }}</td>
+              <td class="td-cell">{{ item.Level4_discipline or '-' }}</td>
+              <td class="td-cell">{{ item.Level5_area_zone or '-' }}</td>
+              <td class="td-cell">{{ item.Level6_site_location or '-' }}</td>
+              <td class="td-cell">{{ item.Level7_equipment_tag or '-' }}</td>
+              <td class="td-cell">{{ item.Level8_work_package or '-' }}</td>
+              <td class="td-cell">{{ item.Level9_activity_name or '-' }}</td>
+              <td class="td-cell">{{ item.pms_item_number or '-' }}</td>
+              <td class="td-cell">{{ item.zone or '-' }}</td>
+              <td class="td-cell">{{ item.phase or '-' }}</td>
+              <td class="td-cell">{{ item.area or '-' }}</td>
+              <td class="td-cell">{{ item.discipline or '-' }}</td>
+              <td class="td-cell">{{ item.work_package or '-' }}</td>
+              <td class="td-cell font-mono">{{ item.wbs_code or '-' }}</td>
+              <td class="td-cell">{{ item.boq_item_code or '-' }}</td>
+              <td class="td-cell">{{ item.activity_id or '-' }}</td>
+              <td class="td-cell">{{ item.equipment_number or '-' }}</td>
+              <td class="td-cell">{{ item.unit_of_measure or '-' }}</td>
+              <td class="td-cell">{{ item.tag_number or '-' }}</td>
+              <td class="td-cell">{{ item.currency or '-' }}</td>
+              <td class="td-cell">{{ item.cost_center or '-' }}</td>
+              <td class="td-cell">{{ item.original_amount if item.original_amount is not none else '-' }}</td>
+              <td class="td-cell">{{ item.adjusted_amount if item.adjusted_amount is not none else '-' }}</td>
+              <td class="td-cell">{{ item.weight_factor if item.weight_factor is not none else '-' }}</td>
+              <td class="td-cell">{{ item.planned_quantity if item.planned_quantity is not none else '-' }}</td>
+              <td class="td-cell">{{ item.actual_quantity if item.actual_quantity is not none else '-' }}</td>
+              <td class="td-cell">
+                {% set done = (item.actual_progress_percentage or 0) | float %}
+                <div class="w-28 mx-auto bg-indigo-100 rounded-full h-5 relative overflow-hidden shadow-inner">
+                  <div class="bg-gradient-to-r from-green-500 to-emerald-600 h-5 rounded-full transition-all duration-500 ease-out"
+                       style="width: {{ done }}%"></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-indigo-900">
+                    {{ done }}%
+                  </span>
+                </div>
+              </td>
+              <td class="td-cell">{{ item.status or '-' }}</td>
+              <td class="td-cell">{{ item.priority or '-' }}</td>
+              <td class="td-cell">{{ item.risk_level or '-' }}</td>
+              <td class="td-cell">{{ item.baseline_start_date.strftime('%Y-%m-%d') if item.baseline_start_date else '-' }}</td>
+              <td class="td-cell">{{ item.baseline_end_date.strftime('%Y-%m-%d') if item.baseline_end_date else '-' }}</td>
+              <td class="td-cell">{{ item.actual_start_date.strftime('%Y-%m-%d') if item.actual_start_date else '-' }}</td>
+              <td class="td-cell">{{ item.actual_end_date.strftime('%Y-%m-%d') if item.actual_end_date else '-' }}</td>
+              <td class="td-cell">{{ item.estimated_duration if item.estimated_duration is not none else '-' }}</td>
+              <td class="td-cell">{{ item.cost_category or '-' }}</td>
+              <td class="td-cell">{{ item.actual_cost if item.actual_cost is not none else '-' }}</td>
+              <td class="td-cell">{{ item.funding_source or '-' }}</td>
+              <td class="td-cell">{{ item.resource_assignment or '-' }}</td>
+              <td class="td-cell">{{ item.responsible_owner.username if item.responsible_owner else (item.responsible_owner_id or '-') }}</td>
+              <td class="td-cell">{{ 'Yes' if item.is_milestone else 'No' }}</td>
+              <td class="td-cell">{{ 'Yes' if item.is_common else 'No' }}</td>
+              <td class="td-cell">{{ item.remarks or '-' }}</td>
+              <td class="td-cell" onclick="event.stopPropagation();">
+                <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <a href="{{ url_for('items.item_edit', item_id=item.id) }}"
+                     title="Edit"
+                     onclick="event.stopPropagation();"
+                     class="text-indigo-600 hover:text-indigo-800 transition-colors">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="POST"
+                        action="{{ url_for('items.item_delete', item_id=item.id) }}"
+                        onclick="event.stopPropagation();"
+                        onsubmit="event.stopPropagation(); return confirm('Are you sure you want to delete this item?')">
+                    {% if delete_form is defined %}
+                      {{ delete_form.hidden_tag() }}
+                    {% else %}
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+                    <button type="submit" title="Delete" class="text-red-600 hover:text-red-800 transition-colors">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="45" class="text-center py-12 text-indigo-500 font-medium text-lg">
+                No items registered yet.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div id="import-modal" class="modal hidden opacity-0 transition-opacity duration-300" aria-hidden="true">
+  <div class="modal-content max-w-md animate-slide-in bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100 mx-auto my-10">
+    <h3 class="text-2xl font-bold mb-5 text-indigo-800">ورود آیتم‌ها از اکسل</h3>
+    <p class="text-base text-indigo-600 mb-5">فایل اکسل خود را آپلود کنید. (قالب پیشنهادی را دانلود کنید)</p>
+    {% if c %}
+      <a href="{{ url_for('items.items_template_xlsx', contract_id=c.id) }}"
+         class="text-indigo-700 hover:text-indigo-900 font-medium mb-6 block text-center transition-colors">
+        <i class="fas fa-download ml-3"></i>
+        دانلود قالب
+      </a>
+      <form method="POST" action="{{ url_for('items.items_import', contract_id=c.id) }}" enctype="multipart/form-data">
+        {% if import_form is defined %}
+          {{ import_form.hidden_tag() }}
+        {% else %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+        <input type="file"
+               name="file"
+               accept=".xlsx,.xls"
+               required
+               class="block w-full text-base text-indigo-600 file:ml-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:font-bold file:bg-indigo-100 file:text-indigo-800 hover:file:bg-indigo-200 transition-all shadow-sm"/>
+        <div class="mt-8 flex justify-end gap-4">
+          <button type="button" onclick="closeImportModal()" class="btn btn-secondary shadow-md">انصراف</button>
+          <button type="submit" class="btn btn-primary shadow-md">آپلود</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .excel-table { border: 1px solid #c7d2fe; font-size: 15px; }
+  .th-cell { padding: 1.25rem 1.75rem; font-weight: 700; color: #3730a3; background: #c7d2fe; border: 1px solid #c7d2fe; text-align: left; white-space: nowrap; }
+  .td-cell { padding: 1rem 1.5rem; border: 1px solid #c7d2fe; text-align: left; vertical-align: middle; }
+  .form-input { background: #fff; border-radius: .75rem; }
+  .form-input.small { padding: .375rem .75rem; font-size: .875rem; }
+  .btn { padding: .75rem 1.5rem; border-radius: .75rem; font-weight: 700; transition: transform .2s, background-color .2s, opacity .2s; }
+  .btn:hover { transform: scale(1.03); }
+  .btn-primary { background: #4f46e5; color: #fff; }
+  .btn-primary:hover { background: #4338ca; }
+  .btn-secondary { background: #e0e7ff; color: #3730a3; }
+  .btn-secondary:hover { background: #c7d2fe; }
+  .btn-success { background: #22c55e; color: #fff; }
+  .btn-success:hover { background: #16a34a; }
+  .btn-info { background: #3b82f6; color: #fff; }
+  .btn-info:hover { background: #2563eb; }
+  .status-badge { display: inline-block; padding: .25rem 1rem; font-size: .875rem; font-weight: 700; border-radius: 9999px; }
+  .status-open { background: #dbeafe; color: #1e3a8a; }
+  .status-in_progress, .status-in-progress { background: #fef3c7; color: #92400e; }
+  .status-blocked { background: #fee2e2; color: #991b1b; }
+  .status-done { background: #dcfce7; color: #166534; }
+  .status-closed { background: #e5e7eb; color: #111827; }
+  .modal { position: fixed; inset: 0; background: rgba(30, 27, 75, 0.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .modal-content { max-height: 90vh; overflow: auto; }
+  .modal.hidden { display: none !important; }
+  .modal.opacity-0 { pointer-events: none; }
+  .modal:not(.opacity-0) { pointer-events: auto; }
+  .highlight-row { background: #e0e7ff; }
+  .custom-scrollbar::-webkit-scrollbar { width: 12px; height: 12px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 9999px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4338ca; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: #e5e7eb; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .animate-fade-in { animation: fade-in .6s ease-out; }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-slide-up { animation: slide-up .6s ease-out; }
+  @keyframes slide-in { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-slide-in { animation: slide-in .4s ease-out; }
+  .delay-100 { animation-delay: .15s; }
+  .delay-200 { animation-delay: .3s; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      const term = (this.value || '').toLowerCase();
+      document.querySelectorAll('#item-table-body tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        let match = false;
+        cells.forEach(cell => {
+          if (cell.querySelector('form') || cell.querySelector('a[title="Edit"]')) return;
+          const text = (cell.textContent || '').toLowerCase();
+          if (text.includes(term)) match = true;
+        });
+        row.style.display = (match || term === '') ? '' : 'none';
+      });
+    });
+  }
+
+  const openModal = (id) => {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.remove('hidden');
+    setTimeout(() => m.classList.remove('opacity-0'), 10);
+  };
+  const closeModal = (id) => {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add('opacity-0');
+    setTimeout(() => m.classList.add('hidden'), 300);
+  };
+  window.openImportModal = () => openModal('import-modal');
+  window.closeImportModal = () => closeModal('import-modal');
+
+  window.highlightRow = function(row) {
+    document.querySelectorAll('#item-table-body tr').forEach(r => r.classList.remove('highlight-row'));
+    row.classList.add('highlight-row');
+  };
+
+  window.addEventListener('click', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('modal')) {
+      closeModal(e.target.id);
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{# Path: pms_app/templates/main/partials/_how_it_works.html #}
+<section class="how-it-works fade-in-up" aria-label="نحوه استفاده">
+    <h2>مسیر موفقیت در سه گام</h2>
+
+    <div class="steps">
+        {% set steps = [
+            {'icon': 'fa-user-plus',        'title': '۱. ثبت‌نام کنید',   'desc': 'در کمتر از ۱ دقیقه حساب بسازید'},
+            {'icon': 'fa-project-diagram',  'title': '۲. پروژه بسازید',  'desc': 'پروژه و قرارداد خود را تعریف کنید'},
+            {'icon': 'fa-rocket',           'title': '۳. مدیریت کنید',   'desc': 'پیشرفت را پایش و گزارش بگیرید'}
+        ] %}
+
+        {% for s in steps %}
+        <div class="step">
+            <div class="icon"><i class="fas {{ s.icon }}" aria-hidden="true"></i></div>
+            <h3>{{ s.title }}</h3>
+            <p>{{ s.desc }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>

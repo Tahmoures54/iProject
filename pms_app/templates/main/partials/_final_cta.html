@@ -1,0 +1,25 @@
+{# Path: pms_app/templates/main/partials/_final_cta.html #}
+<section class="final-cta fade-in-up" aria-label="فراخوان نهایی">
+    <h2>آماده‌اید کسب‌وکار خود را متحول کنید؟</h2>
+    <p>هزاران شرکت به iProject اعتماد کرده‌اند. همین امروز ثبت‌نام کنید و به جمع موفق‌ها بپیوندید!</p>
+
+    {% if not current_user.is_authenticated %}
+        <div class="cta-buttons">
+            <a href="{{ url_for('auth.register') }}" class="button big">
+                <i class="fas fa-rocket" aria-hidden="true"></i>
+                شروع رایگان ۹۰ روزه
+            </a>
+            {% if 'billing.pricing' in url_for.__globals__.get('current_app', {}).view_functions|default({}) %}
+                <a href="{{ url_for('billing.pricing') }}" class="button outline">
+                    <i class="fas fa-tag" aria-hidden="true"></i>
+                    مشاهده قیمت‌ها
+                </a>
+            {% endif %}
+        </div>
+    {% else %}
+        <a href="{{ url_for('main.dashboard') }}" class="button big">
+            <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+            ورود به داشبورد
+        </a>
+    {% endif %}
+</section>

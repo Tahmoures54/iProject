@@ -1,0 +1,24 @@
+# Path: requirements.txt
+
+Flask>=3.0,<4
+Flask-Login>=0.6,<1
+Flask-SQLAlchemy>=3.1,<4
+Flask-Migrate>=4.0,<5
+Flask-WTF>=1.2,<2
+WTForms>=3.1,<4
+email-validator>=2.1,<3
+
+SQLAlchemy>=2.0,<3
+alembic>=1.13,<2
+
+argon2-cffi>=23.1,<24
+python-dotenv>=1.0,<2
+
+# Excel import/export (در items/routes.py استفاده شده)
+openpyxl>=3.1,<4
+
+# Tests
+pytest>=8,<9
+
+# Production WSGI (اختیاری؛ روی ویندوز معمولاً استفاده نمی‌شود)
+gunicorn>=21,<23

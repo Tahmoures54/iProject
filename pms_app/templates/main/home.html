@@ -1,0 +1,58 @@
+{# Path: pms_app/templates/main/home.html #}
+{% extends "base.html" %}
+
+{% block title %}iProject | مدیریت هوشمند پروژه‌ها{% endblock %}
+
+{% block meta %}
+    <meta name="description" content="iProject پلتفرم جامع مدیریت پروژه، قراردادها، بازارچه مصالح و همکاری تیمی برای شرکت‌های مهندسی و بازرگانی.">
+    <meta name="keywords" content="مدیریت پروژه, قرارداد, بازارچه مصالح, iProject, مدیریت انبار, صورت وضعیت">
+    <meta name="author" content="iProject Team">
+
+    {# Open Graph #}
+    <meta property="og:title" content="iProject | مدیریت هوشمند پروژه‌ها">
+    <meta property="og:description" content="پلتفرم جامع مدیریت پروژه و قرارداد برای تیم‌های مهندسی و بازرگانی.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+
+    {# Twitter Card #}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="iProject | مدیریت هوشمند پروژه‌ها">
+    <meta name="twitter:description" content="پلتفرم جامع مدیریت پروژه و قرارداد.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
+{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='img/hero/slide-1.jpg') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    {% include 'main/partials/_hero.html' %}
+    {% include 'main/partials/_stats.html' %}
+    {% include 'main/partials/_benefits.html' %}
+
+    <section class="integrated-management fade-in-up">
+        <h2>قدرت مدیریت یکپارچه و آنلاین پروژه</h2>
+        <p>iProject روش مدیریت پروژه را متحول می‌کند. با پلتفرم ما، شما می‌توانید:</p>
+        <ul>
+            <li>یکپارچگی کامل فرآیندها از درخواست خرید تا تحویل.</li>
+            <li>داشبوردهای آنلاین برای تصمیم‌گیری لحظه‌ای.</li>
+            <li>کاهش خطاها و تأخیرها با گردش کار خودکار.</li>
+            <li>راهکارهای مقیاس‌پذیر برای تیم‌های کوچک تا بزرگ.</li>
+            <li>فروش مصالح مازاد یا خرید کمبود از شرکت‌های دیگر درون پلتفرم.</li>
+        </ul>
+        <p>به آینده مدیریت پروژه بپیوندید؛ ساده، هوشمند و متصل!</p>
+    </section>
+
+    {% include 'main/partials/_how_it_works.html' %}
+    {% include 'main/partials/_testimonials.html' %}
+    {% include 'main/partials/_faq.html' %}
+    {% include 'main/partials/_final_cta.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
+{% endblock %}
