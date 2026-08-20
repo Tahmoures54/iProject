@@ -12,20 +12,15 @@ from flask import Blueprint, Flask
 
 
 def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
-    # در Vercel سیستم‌فایل فقط‌خواندنی است → مسیر instance را به /tmp می‌بریم
     instance_path = "/tmp/instance" if os.getenv("VERCEL") == "1" else None
     app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)
 
-    # ----------------------------
-    # Load .env (optional)
-    # ----------------------------
     try:
         from dotenv import load_dotenv  # type: ignore
         load_dotenv()
     except Exception:
         pass
 
-    # اگر روی ورسل بودیم و متغیری نبود، پیش‌فرض production می‌گیریم
     cfg = (
         config_name
         or env
@@ -34,14 +29,8 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
         or ("production" if os.getenv("VERCEL") == "1" else "development")
     ).strip().lower()
 
-    # ----------------------------
-    # Logging setup (Vercel → stdout)
-    # ----------------------------
     _setup_logging(app)
 
-    # ----------------------------
-    # Load config (بدون try/except تا خطاها مخفی نشوند)
-    # ----------------------------
     if cfg == "production":
         app.config.from_object("pms_app.config.production.ProductionConfig")
     elif cfg == "testing":
@@ -49,9 +38,6 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
     else:
         app.config.from_object("pms_app.config.development.DevelopmentConfig")
 
-    # ----------------------------
-    # Init extensions
-    # ----------------------------
     from . import extensions as ext
 
     init_extensions = getattr(ext, "init_extensions", None)
@@ -67,33 +53,24 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
             if callable(init_app):
                 init_app(app)
 
-    # 🔥 بسیار مهم: همه مدل‌ها باید قبل از create_all / migrate import شوند
     import pms_app.models  # noqa: F401
 
-    # ----------------------------
-    # Ensure DB & Seed (dev only)
-    # ----------------------------
+    # Jalali + other template filters
+    try:
+        from pms_app.utils.template_filters import register_template_filters
+        register_template_filters(app)
+    except Exception:
+        app.logger.exception("Failed to register template filters")
+
     _ensure_db_schema_and_seed(app, cfg=cfg)
-
-    # ----------------------------
-    # Register blueprints
-    # ----------------------------
     _register_blueprints(app)
-
-    # ----------------------------
-    # Fallback & Debug routes
-    # ----------------------------
     _ensure_debug_routes(app)
     _ensure_root_route(app)
 
     return app
 
-# ============================================================
-# Helpers (بقیه کدهای شما بدون تغییر باقی می‌مانند)
-# ============================================================
 
 def _setup_logging(app: Flask) -> None:
-    """Set logging handler: stdout on Vercel, file locally."""
     app.logger.handlers.clear()
 
     if os.getenv("VERCEL") == "1":
