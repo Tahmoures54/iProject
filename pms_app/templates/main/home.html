@@ -1,24 +1,24 @@
 {# Path: pms_app/templates/main/home.html #}
 {% extends "base.html" %}
 
-{% block title %}iProject | سامانه هوشمند کنترل پروژه و CBS{% endblock %}
+{% block title %}iProject | کنترل پروژه با EVM، CBS، گزارش روزانه و کانسرن{% endblock %}
 
 {% block meta %}
-    <meta name="description" content="iProject سامانه تخصصی مدیریت و کنترل پروژه با پشتیبانی از WBS، CBS، Earned Value Management (EVM)، مدیریت قرارداد و صورت‌وضعیت برای شرکت‌های مهندسی و پیمانکاری.">
-    <meta name="keywords" content="کنترل پروژه, مدیریت پروژه, CBS, WBS, EVM, صورت وضعیت, مدیریت قرارداد, iProject, PMS, Cost Breakdown Structure">
-    <meta name="author" content="iProject Team">
+    <meta name="description" content="iProject سامانه تخصصی کنترل پروژه برای پیمانکاران و مشاوران: WBS، CBS، Earned Value، گزارش روزانه کارگاه با تأیید مدیر، کانسرن با کنترل دسترسی، تاریخ جلالی و Multi-tenant.">
+    <meta name="keywords" content="کنترل پروژه, EVM, CBS, WBS, گزارش روزانه, کانسرن, صورت وضعیت, مدیریت قرارداد, iProject, PMS, جلالی">
+    <meta name="author" content="iProject">
+    <meta name="robots" content="index, follow">
 
-    {# Open Graph #}
-    <meta property="og:title" content="iProject | سامانه هوشمند کنترل پروژه و CBS">
-    <meta property="og:description" content="پلتفرم حرفه‌ای کنترل پروژه با EVM، CBS، مدیریت قرارداد و گزارش‌های لحظه‌ای برای تیم‌های مهندسی و پیمانکاری.">
+    <meta property="og:title" content="iProject | کنترل پروژه حرفه‌ای با EVM و گزارش روزانه">
+    <meta property="og:description" content="EVM + CBS + گزارش روزانه تأیید‌محور + کانسرن با visibility — پلتفرم بومی برای تیم‌های مهندسی و پیمانکاری.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
     <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:locale" content="fa_IR">
 
-    {# Twitter Card #}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="iProject | سامانه هوشمند کنترل پروژه و CBS">
-    <meta name="twitter:description" content="کنترل یکپارچه پروژه با استانداردهای روز دنیا (EVM, CBS, WBS).">
+    <meta name="twitter:title" content="iProject | سامانه هوشمند کنترل پروژه">
+    <meta name="twitter:description" content="کنترل یکپارچه پروژه با استانداردهای جهانی و نیازهای پیمانکاری ایران.">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/hero/slide-1.jpg', _external=True) }}">
 {% endblock %}
 
@@ -34,16 +34,16 @@
     {% include 'main/partials/_benefits.html' %}
 
     <section class="integrated-management fade-in-up">
-        <h2>کنترل پروژه به سبک استانداردهای روز دنیا</h2>
-        <p>iProject بر اساس اصول مدرن Project Controls طراحی شده و امکانات زیر را یکپارچه ارائه می‌دهد:</p>
+        <h2>یک محصول — کل چرخه کنترل پروژه</h2>
+        <p>رقبا اغلب یا فقط تسک‌منیجرند، یا فقط اکسل پیشرفته. iProject لایه‌های واقعی Project Controls را یکجا دارد:</p>
         <ul>
-            <li>ساختار شکست کار (WBS) و ساختار شکست هزینه (CBS) به‌صورت سلسله‌مراتبی</li>
-            <li>مدیریت ارزش کسب‌شده (Earned Value Management) با شاخص‌های CPI، SPI، EAC و TCPI</li>
-            <li>کنترل قرارداد، صورت‌وضعیت و آیتم‌های قراردادی با Import/Export اکسل</li>
-            <li>داشبوردهای لحظه‌ای پیشرفت فیزیکی، زمانی و مالی</li>
-            <li>نقش‌محوری دقیق (RBAC) و Multi-tenancy برای شرکت‌ها و پیمانکاران</li>
+            <li><strong>برنامه‌ریزی:</strong> WBS / CBS و قرارداد با Import اکسل</li>
+            <li><strong>اجرا:</strong> گزارش روزانه سایت با گردش تأیید مدیر</li>
+            <li><strong>کنترل:</strong> EVM، S-Curve، انحراف هزینه و زمان</li>
+            <li><strong>حاکمیت:</strong> کانسرن با سطح دسترسی، RBAC، Multi-tenant</li>
+            <li><strong>بومی:</strong> تقویم جلالی و سناریوهای پیمانکاری ایران</li>
         </ul>
-        <p>از برنامه‌ریزی تا اجرا و کنترل؛ همه چیز در یک پلتفرم حرفه‌ای.</p>
+        <p>آماده دریافت داده واقعی تیم شما — از روز اول استقرار.</p>
     </section>
 
     {% include 'main/partials/_how_it_works.html' %}

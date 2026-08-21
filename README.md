@@ -1,127 +1,122 @@
 # iProject — سامانه هوشمند کنترل پروژه و CBS
 
-**iProject** یک پلتفرم تحت وب حرفه‌ای برای **مدیریت و کنترل پروژه** است که بر اساس استانداردهای روز دنیا (WBS، CBS و Earned Value Management) طراحی شده است.
+**iProject** پلتفرم تحت‌وب **Project Controls** برای شرکت‌های مهندسی، پیمانکاری و مشاور است:  
+**WBS · CBS · EVM · گزارش روزانه کارگاه · کانسرن با کنترل دسترسی · تاریخ جلالی · Multi-tenant**
 
-مناسب شرکت‌های مهندسی، پیمانکاری، مشاور و سازمان‌هایی که نیاز به کنترل دقیق پیشرفت فیزیکی، زمانی و مالی پروژه‌ها همراه با مدیریت قرارداد و صورت‌وضعیت دارند.
+هدف: آماده‌ی **داده واقعی**، جذب کاربر، و جلوتر از نرم‌افزارهای صرفاً تسک‌محور یا اکسل‌محور.
+
+---
+
+## چرا از رقبا متمایز است؟
+
+| قابلیت | iProject | بسیاری از رقبا |
+|--------|----------|----------------|
+| Earned Value (CPI/SPI/EAC/S-Curve) | ✅ | محدود / ندارد |
+| CBS + قرارداد + صورت‌وضعیت + Excel | ✅ | جزئی |
+| گزارش روزانه با تأیید قبل از اعمال پیشرفت | ✅ | نادر |
+| کانسرن با visibility (خصوصی/پروژه/مدیران/شرکت) | ✅ | ندارد |
+| تقویم جلالی بومی | ✅ | ضعیف |
+| RBAC + Multi-tenant | ✅ | متغیر |
+| Docker + `/health` + هدرهای امنیتی | ✅ | — |
 
 ---
 
 ## امکانات اصلی
 
-### کنترل پروژه (Project Controls)
-- ساختار شکست کار (**WBS**) و ساختار شکست هزینه (**CBS**)
-- پشتیبانی از **Earned Value Management (EVM)**
-  - شاخص‌های CPI، SPI، EAC، TCPI و ...
-- داشبوردهای لحظه‌ای پیشرفت فیزیکی، زمانی و مالی
-- ردیابی انحرافات و هشدارها
+### کنترل پروژه
+- WBS / CBS سلسله‌مراتبی
+- EVM: PV, EV, AC, CPI, SPI, EAC, TCPI + S-Curve
+- داشبورد پیشرفت فیزیکی، زمانی، مالی
 
-### مدیریت قرارداد و آیتم‌ها
-- ثبت قرارداد، الحاقیه و صورت‌وضعیت
-- مدیریت آیتم‌های قراردادی در سطح قرارداد
-- **Import از Excel** و **Export به CSV**
-- محاسبات خودکار مبالغ و پیشرفت
+### گزارش روزانه (Daily Report)
+- ثبت توسط پیمانکار/گروه اجرایی
+- گردش: پیش‌نویس → ارسال → بررسی → تأیید / رد / اصلاح
+- اعمال پیشرفت روی آیتم‌ها **فقط پس از تأیید**
 
-### امنیت و دسترسی
-- احراز هویت کامل (ثبت‌نام، ورود، فراموشی رمز، تغییر رمز)
-- احراز هویت دو مرحله‌ای (**2FA**)
-- **RBAC** با نقش‌های: مالک سیستم، ادمین شرکت، مدیر پروژه، پیمانکار، مشاهده‌گر و ...
-- Multi-tenancy بر اساس شرکت (جداسازی کامل داده‌ها)
+### کانسرن‌ها (Concerns)
+- دسته‌بندی: فنی، زمان، هزینه، ایمنی، کیفیت، قراردادی، …
+- اولویت و وضعیت (باز تا بسته / ارجاع)
+- **کنترل مشاهده** در چهار سطح
+- نظرات (عمومی / داخلی مدیران) + تاریخچه
 
-### سایر قابلیت‌ها
-- صفحات عمومی (Home، About، Help، Terms، Privacy)
-- سیستم اشتراک و پلن‌های پولی (رایگان، برنز، نقره، طلا)
-- پشتیبانی از SMS
-- تست‌ها با pytest
-- آماده استقرار با Docker و Gunicorn
+### قرارداد و آیتم
+- قرارداد، الحاقیه، آیتم، Import Excel / Export CSV
+
+### امنیت و استقرار
+- 2FA، RBAC، CSRF، هدرهای امنیتی
+- PostgreSQL توصیه‌شده، Docker، Gunicorn
+- `GET /health` برای مانیتورینگ
 
 ---
 
-## ساختار پروژه
-
-```
-iProject/
-├── app.py                 # نقطه ورود اصلی
-├── pms_app/
-│   ├── blueprints/        # ماژول‌های auth, projects, contracts, items, billing, users, reports, main
-│   ├── models/            # مدل‌های User, Company, Project, Contract, ContractItem, Subscription, ...
-│   ├── templates/         # قالب‌های Jinja2
-│   ├── static/            # CSS, JS, تصاویر
-│   ├── utils/             # امنیت، entitlement، SMS، پلن‌ها
-│   └── config/            # تنظیمات development / production / testing
-├── migrations/            # Alembic
-├── tests/
-├── Dockerfile
-├── docker-compose.yml
-└── requirements.txt
-```
-
----
-
-## پیش‌نیازها
+## پیش‌نیاز
 
 - Python 3.10+
-- PostgreSQL (توصیه برای production) یا SQLite (توسعه)
-- Docker (اختیاری اما توصیه می‌شود)
+- PostgreSQL (production) یا SQLite (توسعه)
+- Docker (اختیاری)
 
 ---
 
-## نصب سریع (توسعه)
+## نصب توسعه
 
 ```bash
 git clone https://github.com/Tahmoures54/iProject.git
 cd iProject
-
 python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/Mac:
-source .venv/bin/activate
-
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-فایل `.env` را بسازید (نمونه در `.env.example`):
-
-```dotenv
-PMS_ENV=development
-FLASK_DEBUG=1
-SECRET_KEY=change-me-to-a-strong-secret
-SQLALCHEMY_DATABASE_URI=sqlite:///instance/pms.db
-HOST=127.0.0.1
-PORT=5000
-AUTO_DB_UPGRADE=1
-```
-
-اجرا:
-
-```bash
+cp .env.example .env        # SECRET_KEY را عوض کنید
 python app.py
 ```
 
-سپس به آدرس زیر بروید:  
 http://127.0.0.1:5000
 
+جداول جدید (گزارش روزانه، کانسرن) در حالت توسعه با `create_all` ساخته می‌شوند.
+
 ---
 
-## استقرار Production (توصیه)
-
-- **WSGI**: Gunicorn
-- **Reverse Proxy**: Nginx
-- **دیتابیس**: PostgreSQL
-- **Container**: Docker + docker-compose
+## Production
 
 ```bash
+# .env
+PMS_ENV=production
+SECRET_KEY=<random-48+chars>
+DATABASE_URL=postgresql+psycopg2://...
+PMS_AUTO_CREATE_DB=0   # ترجیحاً Alembic
+
 docker compose up -d --build
+curl https://your-domain/health
 ```
 
-حتماً:
-- `SECRET_KEY` قوی تنظیم کنید
-- SSL فعال باشد
-- فایل `.env` را هرگز commit نکنید
+- هرگز `.env` واقعی را commit نکنید
+- SSL + `SECRET_KEY` قوی الزامی است
 
 ---
 
-## تست‌ها
+## نقش‌ها (RBAC)
+
+| نقش | کاربرد |
+|-----|--------|
+| owner / admin | پلتفرم |
+| company_admin | کل شرکت |
+| manager | پروژه + تأیید گزارش + کانسرن |
+| contractor | گزارش روزانه + ثبت کانسرن |
+| viewer | مشاهده |
+
+---
+
+## ساختار کلیدی
+
+```
+pms_app/
+  blueprints/   auth, projects, contracts, items, daily_reports, concerns, billing, ...
+  models/       Project, ContractItem, DailyReport, Concern, ...
+  utils/        evm, security, jalali, entitlements
+```
+
+---
+
+## تست
 
 ```bash
 pytest -q
@@ -129,32 +124,4 @@ pytest -q
 
 ---
 
-## نقش‌ها و دسترسی‌ها (RBAC)
-
-| نقش              | توضیح                              |
-|------------------|------------------------------------|
-| owner            | مالک کامل پلتفرم                   |
-| admin            | ادمین سیستم                        |
-| company_admin    | مدیر شرکت (دسترسی کامل شرکت)      |
-| manager          | مدیر پروژه                         |
-| contractor       | پیمانکار (دسترسی محدود به پروژه)  |
-| viewer           | فقط مشاهده                         |
-
----
-
-## استانداردهای پشتیبانی‌شده
-
-- **WBS** (Work Breakdown Structure)
-- **CBS** (Cost Breakdown Structure)
-- **EVM** (Earned Value Management)
-- مدیریت قرارداد و صورت‌وضعیت مطابق نیازهای پروژه‌های پیمانکاری ایران
-
----
-
-## مجوز
-
-این پروژه برای استفاده داخلی و تجاری طراحی شده است. در صورت نیاز به لایسنس خاص، با مالک پروژه هماهنگ کنید.
-
----
-
-**iProject** — کنترل پروژه را حرفه‌ای کنید.
+**iProject** — کنترل پروژه را حرفه‌ای، بومی و قابل دفاع کنید.
