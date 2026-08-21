@@ -8,7 +8,7 @@ from importlib import import_module
 from pathlib import Path
 from pkgutil import iter_modules
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, jsonify
 
 
 def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
@@ -64,8 +64,11 @@ def create_app(config_name: str | None = None, env: str | None = None) -> Flask:
 
     _ensure_db_schema_and_seed(app, cfg=cfg)
     _register_blueprints(app)
+    _register_security_headers(app)
+    _register_health_check(app)
     _ensure_debug_routes(app)
     _ensure_root_route(app)
+    _warn_insecure_secret(app, cfg=cfg)
 
     return app
 
@@ -104,7 +107,66 @@ def _is_debug(app: Flask) -> bool:
     return bool(app.config.get("DEBUG", False))
 
 
+def _warn_insecure_secret(app: Flask, *, cfg: str) -> None:
+    key = (app.config.get("SECRET_KEY") or "").strip()
+    weak = {"", "dev-secret-change-me", "change-me-to-a-strong-secret", "replace-with-a-secure-secret-key"}
+    if cfg == "production" and key in weak:
+        app.logger.error(
+            "INSECURE SECRET_KEY in production! Set a strong random SECRET_KEY in environment."
+        )
+
+
+def _register_security_headers(app: Flask) -> None:
+    """OWASP-aligned security headers for production readiness."""
+
+    @app.after_request
+    def _set_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "geolocation=(), microphone=(), camera=()",
+        )
+        if not app.config.get("DEBUG"):
+            response.headers.setdefault(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains",
+            )
+        # Avoid caching authenticated HTML by default
+        if response.content_type and "text/html" in response.content_type:
+            response.headers.setdefault("Cache-Control", "no-store")
+        return response
+
+
+def _register_health_check(app: Flask) -> None:
+    @app.get("/health")
+    def health():
+        """Liveness/readiness for Docker, k8s, load balancers."""
+        status = {"status": "ok", "app": app.config.get("APP_NAME", "iProject")}
+        try:
+            from pms_app.extensions import db
+            from sqlalchemy import text
+
+            with app.app_context():
+                db.session.execute(text("SELECT 1"))
+            status["database"] = "ok"
+            code = 200
+        except Exception as exc:
+            status["status"] = "degraded"
+            status["database"] = "error"
+            status["detail"] = str(exc)[:200]
+            code = 503
+        return jsonify(status), code
+
+
 def _ensure_db_schema_and_seed(app: Flask, *, cfg: str) -> None:
+    """
+    Ensure schema exists for real data.
+    - Empty DB → create_all
+    - Existing DB with missing tables (e.g. daily_reports, concerns) → create missing only
+    Production: only if PMS_AUTO_CREATE_DB=1 (prefer Alembic migrations)
+    """
     if app.config.get("TESTING") is True:
         return
 
@@ -124,10 +186,20 @@ def _ensure_db_schema_and_seed(app: Flask, *, cfg: str) -> None:
             inspector = sa_inspect(db.engine)
             existing_tables = set(inspector.get_table_names())
 
+            # All model tables registered on metadata
+            expected = set(db.metadata.tables.keys())
+            missing = expected - existing_tables
+
             if not existing_tables or existing_tables == {"alembic_version"}:
                 app.logger.warning(
                     "Database is empty (tables=%s). Running db.create_all() ...",
                     sorted(existing_tables),
+                )
+                db.create_all()
+            elif missing:
+                app.logger.warning(
+                    "Missing tables detected: %s — creating them via create_all (checkfirst=True)",
+                    sorted(missing),
                 )
                 db.create_all()
 
