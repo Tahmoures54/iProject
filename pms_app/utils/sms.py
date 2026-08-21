@@ -37,83 +37,117 @@ class ConsoleSmsProvider(SmsProvider):
             current_app.logger.info("SMS[console] TO=%s SENDER=%s MSG=%s", to, sender, message)
         except Exception:
             pass
-
         print(
             f"\n=== SMS (console) ===\nTO: {to}\nSENDER: {sender}\nMSG: {message}\n=====================\n"
         )
         return SmsSendResult(ok=True, provider=self.name, status_code=200, response_text="console")
 
 
+class KavenegarProvider(SmsProvider):
+    """
+    پنل کاوه‌نگار — رایج در ایران.
+    ENV:
+      SMS_PROVIDER=kavenegar
+      KAVENEGAR_API_KEY=...
+      KAVENEGAR_SENDER=1000...  (اختیاری)
+    """
+
+    name = "kavenegar"
+
+    def __init__(self) -> None:
+        cfg = current_app.config
+        self.api_key = (
+            cfg.get("KAVENEGAR_API_KEY") or os.getenv("KAVENEGAR_API_KEY") or ""
+        ).strip()
+        self.default_sender = (
+            cfg.get("KAVENEGAR_SENDER")
+            or os.getenv("KAVENEGAR_SENDER")
+            or cfg.get("SMS_SENDER")
+            or os.getenv("SMS_SENDER")
+            or ""
+        ).strip()
+
+    def send(self, to: str, message: str, *, sender: Optional[str] = None) -> SmsSendResult:
+        try:
+            import requests  # type: ignore
+        except Exception as e:
+            return SmsSendResult(ok=False, provider=self.name, error=f"requests not installed: {e}")
+
+        if not self.api_key:
+            return SmsSendResult(ok=False, provider=self.name, error="KAVENEGAR_API_KEY is not set")
+
+        # Kavenegar accepts 09... or 9...
+        to_norm = normalize_phone(to).replace("+", "")
+        if to_norm.startswith("98") and len(to_norm) == 12:
+            to_norm = "0" + to_norm[2:]
+
+        url = f"https://api.kavenegar.com/v1/{self.api_key}/sms/send.json"
+        payload: dict[str, Any] = {"receptor": to_norm, "message": message}
+        from_line = (sender or self.default_sender or "").strip()
+        if from_line:
+            payload["sender"] = from_line
+
+        try:
+            resp = requests.post(url, data=payload, timeout=15)
+            text = resp.text or ""
+            msg_id = None
+            try:
+                data = resp.json()
+                entries = (data or {}).get("entries") or []
+                if entries and isinstance(entries, list):
+                    msg_id = str(entries[0].get("messageid") or entries[0].get("messageId") or "")
+                ret = (data or {}).get("return") or {}
+                status = int(ret.get("status") or resp.status_code)
+                if status != 200:
+                    return SmsSendResult(
+                        ok=False,
+                        provider=self.name,
+                        message_id=msg_id,
+                        status_code=status,
+                        response_text=text[:4000],
+                        error=str(ret.get("message") or f"status {status}"),
+                    )
+            except Exception:
+                pass
+
+            ok = 200 <= int(resp.status_code) < 300
+            return SmsSendResult(
+                ok=ok,
+                provider=self.name,
+                message_id=msg_id,
+                status_code=int(resp.status_code),
+                response_text=text[:4000],
+                error=None if ok else f"HTTP {resp.status_code}",
+            )
+        except Exception as e:
+            return SmsSendResult(ok=False, provider=self.name, error=str(e))
+
+
 class MeliPayamakProvider(SmsProvider):
-    """
-    Provider برای سرویس پیامکی (بر اساس username/password + متد sms.send).
-
-    ENV/Config:
-      SMS_PROVIDER=melipayamak
-      SMS_ENABLED=true
-
-      MELIPAYAMAK_USERNAME=...
-      MELIPAYAMAK_PASSWORD=...
-      MELIPAYAMAK_API_KEY=...            (اختیاری)
-      MELIPAYAMAK_FROM=5000...           (اختیاری؛ اگر پاس ندهی از sender استفاده می‌کند)
-
-      MELIPAYAMAK_SEND_URL=https://...   (الزامی)
-      MELIPAYAMAK_MODE=json|form         (پیش‌فرض json)
-
-      MELIPAYAMAK_FIELD_USERNAME=username
-      MELIPAYAMAK_FIELD_PASSWORD=password
-      MELIPAYAMAK_FIELD_TO=to
-      MELIPAYAMAK_FIELD_FROM=from
-      MELIPAYAMAK_FIELD_TEXT=text
-      MELIPAYAMAK_FIELD_ISFLASH=isFlash  (اختیاری)
-
-      MELIPAYAMAK_AUTH_HEADER=X-API-KEY  (اختیاری)
-    """
-
     name = "melipayamak"
 
     def __init__(self) -> None:
         cfg = current_app.config
-
         self.username = cfg.get("MELIPAYAMAK_USERNAME") or os.getenv("MELIPAYAMAK_USERNAME", "")
         self.password = cfg.get("MELIPAYAMAK_PASSWORD") or os.getenv("MELIPAYAMAK_PASSWORD", "")
         self.api_key = cfg.get("MELIPAYAMAK_API_KEY") or os.getenv("MELIPAYAMAK_API_KEY", "")
-
         self.default_from = cfg.get("MELIPAYAMAK_FROM") or os.getenv("MELIPAYAMAK_FROM", "")
-
         self.send_url = cfg.get("MELIPAYAMAK_SEND_URL") or os.getenv("MELIPAYAMAK_SEND_URL", "")
         self.mode = (cfg.get("MELIPAYAMAK_MODE") or os.getenv("MELIPAYAMAK_MODE", "json")).strip().lower()
-
-        self.f_username = cfg.get("MELIPAYAMAK_FIELD_USERNAME") or os.getenv(
-            "MELIPAYAMAK_FIELD_USERNAME", "username"
-        )
-        self.f_password = cfg.get("MELIPAYAMAK_FIELD_PASSWORD") or os.getenv(
-            "MELIPAYAMAK_FIELD_PASSWORD", "password"
-        )
+        self.f_username = cfg.get("MELIPAYAMAK_FIELD_USERNAME") or os.getenv("MELIPAYAMAK_FIELD_USERNAME", "username")
+        self.f_password = cfg.get("MELIPAYAMAK_FIELD_PASSWORD") or os.getenv("MELIPAYAMAK_FIELD_PASSWORD", "password")
         self.f_to = cfg.get("MELIPAYAMAK_FIELD_TO") or os.getenv("MELIPAYAMAK_FIELD_TO", "to")
         self.f_from = cfg.get("MELIPAYAMAK_FIELD_FROM") or os.getenv("MELIPAYAMAK_FIELD_FROM", "from")
         self.f_text = cfg.get("MELIPAYAMAK_FIELD_TEXT") or os.getenv("MELIPAYAMAK_FIELD_TEXT", "text")
-        self.f_isflash = cfg.get("MELIPAYAMAK_FIELD_ISFLASH") or os.getenv(
-            "MELIPAYAMAK_FIELD_ISFLASH", "isFlash"
-        )
-
+        self.f_isflash = cfg.get("MELIPAYAMAK_FIELD_ISFLASH") or os.getenv("MELIPAYAMAK_FIELD_ISFLASH", "isFlash")
         self.auth_header = cfg.get("MELIPAYAMAK_AUTH_HEADER") or os.getenv("MELIPAYAMAK_AUTH_HEADER", "")
 
     def _normalize_to_domestic(self, phone: str) -> str:
-        """
-        بیشتر پنل‌های پیامکی ایرانی با 09... یا 98... راحت‌ترند.
-        این تابع +98... را به 09... تبدیل می‌کند.
-        """
         s = normalize_phone(phone).replace("+", "")
-
-        # 98912... => 0912...
         if s.startswith("98") and len(s) == 12:
             return "0" + s[2:]
-
-        # 9xxxxxxxxx => 09xxxxxxxxx
         if s.startswith("9") and len(s) == 10:
             return "0" + s
-
         return s
 
     def send(self, to: str, message: str, *, sender: Optional[str] = None) -> SmsSendResult:
@@ -139,7 +173,6 @@ class MeliPayamakProvider(SmsProvider):
             self.f_from: from_line,
             self.f_text: message,
         }
-
         if self.f_isflash:
             payload[self.f_isflash] = False
 
@@ -156,8 +189,6 @@ class MeliPayamakProvider(SmsProvider):
 
             text = resp.text or ""
             ok_http = 200 <= int(resp.status_code) < 300
-
-            # تلاش برای استخراج message_id از پاسخ
             msg_id: Optional[str] = None
             try:
                 data = resp.json()
@@ -166,10 +197,6 @@ class MeliPayamakProvider(SmsProvider):
                         if k in data and data[k] is not None:
                             msg_id = str(data[k])
                             break
-                    if msg_id is None:
-                        v = data.get("Value") or data.get("value")
-                        if isinstance(v, list) and v:
-                            msg_id = str(v[0])
             except Exception:
                 m = re.search(r"-?\d+", text)
                 if m:
@@ -184,7 +211,6 @@ class MeliPayamakProvider(SmsProvider):
                     response_text=text[:4000],
                     error=f"HTTP {resp.status_code}",
                 )
-
             return SmsSendResult(
                 ok=True,
                 provider=self.name,
@@ -200,8 +226,7 @@ def _is_enabled() -> bool:
     raw = current_app.config.get("SMS_ENABLED")
     if raw is None:
         raw = os.getenv("SMS_ENABLED", "false")
-    s = str(raw).strip().lower()
-    return s in {"1", "true", "yes", "on"}
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _provider_name() -> str:
@@ -209,7 +234,6 @@ def _provider_name() -> str:
 
 
 def _default_sender() -> Optional[str]:
-    # تنظیم عمومی (اختیاری). Providerها هم ممکن است default خودشان را داشته باشند.
     return (current_app.config.get("SMS_SENDER") or os.getenv("SMS_SENDER") or "").strip() or None
 
 
@@ -217,45 +241,29 @@ def get_provider() -> SmsProvider:
     name = _provider_name()
     if name in {"console", "dev", "print"}:
         return ConsoleSmsProvider()
+    if name in {"kavenegar", "kaveh", "kavenegar.com"}:
+        return KavenegarProvider()
     if name in {"melipayamak", "meli", "payamak"}:
         return MeliPayamakProvider()
     return ConsoleSmsProvider()
 
 
 def normalize_phone(phone: str) -> str:
-    """
-    نرمال‌سازی شماره:
-    - تبدیل اعداد فارسی به انگلیسی
-    - حذف کاراکترهای غیر ضروری
-    - استانداردسازی به +98xxxxxxxxxx در صورت امکان
-    """
     fa_to_en = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
     s = (phone or "").strip().translate(fa_to_en)
     s = re.sub(r"[^\d+]", "", s)
-
-    # فقط اجازه یک + در اول
     if s.count("+") > 1:
         s = s.replace("+", "")
-
     if s.startswith("+"):
-        plus = "+"
-        rest = s[1:]
+        plus, rest = "+", s[1:]
     else:
-        plus = ""
-        rest = s
-
-    # 09xxxxxxxxx => +989xxxxxxxxx
+        plus, rest = "", s
     if rest.startswith("0") and len(rest) == 11:
-        rest = "98" + rest[1:]
-        plus = "+"
-    # 98xxxxxxxxxx => +98xxxxxxxxxx
+        rest, plus = "98" + rest[1:], "+"
     elif rest.startswith("98") and len(rest) == 12:
         plus = "+"
-    # 9xxxxxxxxx => +989xxxxxxxxx
     elif rest.startswith("9") and len(rest) == 10:
-        rest = "98" + rest
-        plus = "+"
-
+        rest, plus = "98" + rest, "+"
     return f"{plus}{rest}"
 
 
@@ -265,11 +273,19 @@ class _SafeDict(dict):
 
 
 def render_message(template: str, context: Optional[Mapping[str, Any]] = None) -> str:
-    ctx = dict(context or {})
     try:
-        return template.format_map(_SafeDict(**ctx))
+        return template.format_map(_SafeDict(**dict(context or {})))
     except Exception:
         return template
+
+
+def _get_sms_log_model():
+    """SMSLog is the canonical model class."""
+    try:
+        from pms_app.models.sms_log import SMSLog
+        return SMSLog
+    except Exception:
+        return None
 
 
 def send_sms(
@@ -282,12 +298,6 @@ def send_sms(
     user_id: Optional[int] = None,
     sender: Optional[str] = None,
 ) -> SmsSendResult:
-    """
-    API اصلی ارسال پیامک در پروژه.
-
-    - با مدل pms_app/models/sms_log.py شما هماهنگ است.
-    - اگر SMS_ENABLED=false باشد: لاگ ساخته می‌شود و status=skipped ثبت می‌گردد.
-    """
     if not to:
         return SmsSendResult(ok=False, provider="none", error="Missing recipient")
 
@@ -299,32 +309,31 @@ def send_sms(
     provider = get_provider()
     provider_name = getattr(provider, "name", "unknown")
     sender_final = sender or _default_sender()
+    phone_norm = normalize_phone(to)
 
-    # ---- create log (queued)
     sms_log = None
-    try:
-        from pms_app.models.sms_log import SmsLog  # local import
-
-        sms_log = SmsLog(
-            user_id=int(user_id) if user_id is not None else None,
-            phone=normalize_phone(to),
-            purpose=(purpose or "").strip() or None,
-            template=(template or "").strip() or None,
-            message=message,
-            provider=provider_name,
-            status="queued",
-            attempts=1,
-        )
-        db.session.add(sms_log)
-        db.session.commit()
-    except Exception:
-        sms_log = None
+    SMSLog = _get_sms_log_model()
+    if SMSLog is not None:
         try:
-            db.session.rollback()
+            sms_log = SMSLog(
+                user_id=int(user_id) if user_id is not None else None,
+                phone=phone_norm,
+                purpose=(purpose or "").strip() or None,
+                template=(template or "").strip() or None,
+                message=message,
+                provider=provider_name,
+                status="queued",
+                attempts=1,
+            )
+            db.session.add(sms_log)
+            db.session.commit()
         except Exception:
-            pass
+            sms_log = None
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
 
-    # ---- skip if disabled
     if not _is_enabled():
         res = SmsSendResult(ok=False, provider=provider_name, error="SMS is disabled (SMS_ENABLED=false)")
         if sms_log is not None:
@@ -337,10 +346,8 @@ def send_sms(
                 db.session.rollback()
         return res
 
-    # ---- send
     res = provider.send(to=to, message=message, sender=sender_final)
 
-    # ---- update log
     if sms_log is not None:
         try:
             sms_log.status = "sent" if res.ok else "failed"
@@ -354,13 +361,12 @@ def send_sms(
         except Exception:
             db.session.rollback()
 
-    # ---- app log
     try:
         if res.ok:
-            current_app.logger.info("SMS sent. provider=%s to=%s purpose=%s", provider_name, to, purpose)
+            current_app.logger.info("SMS sent. provider=%s to=%s purpose=%s", provider_name, phone_norm, purpose)
         else:
             current_app.logger.warning(
-                "SMS failed. provider=%s to=%s purpose=%s err=%s", provider_name, to, purpose, res.error
+                "SMS failed. provider=%s to=%s purpose=%s err=%s", provider_name, phone_norm, purpose, res.error
             )
     except Exception:
         pass
@@ -369,8 +375,4 @@ def send_sms(
 
 
 def send(to: str, message: str, **kwargs: Any) -> SmsSendResult:
-    """
-    alias برای سازگاری:
-    - برخی جاها ممکن است send(to, message) صدا زده شود.
-    """
     return send_sms(to=to, message=message, **kwargs)
