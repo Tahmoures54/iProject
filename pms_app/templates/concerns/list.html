@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}کانسرن‌ها | iProject{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6" dir="rtl">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+        <span class="w-2 h-8 bg-rose-500 rounded-full"></span>
+        کانسرن‌ها و دغدغه‌ها
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">ثبت، پیگیری و مدیریت دغدغه‌های کاری پروژه و شرکت با کنترل دسترسی</p>
+    </div>
+    <a href="{{ url_for('concerns.create') }}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white font-bold text-sm rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-500/20">
+      <i class="fas fa-plus"></i> ثبت کانسرن جدید
+    </a>
+  </div>
+
+  <form method="get" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-[140px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">جستجو</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="عنوان یا شرح..."
+             class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+    </div>
+    <div class="min-w-[120px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">وضعیت</label>
+      <select name="status" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        {% for k, v in status_labels.items() %}
+          <option value="{{ k }}" {% if status == k %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[110px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">اولویت</label>
+      <select name="priority" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        {% for k, v in priority_labels.items() %}
+          <option value="{{ k }}" {% if priority == k %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[130px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">دسته</label>
+      <select name="category" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        {% for k, v in category_labels.items() %}
+          <option value="{{ k }}" {% if category == k %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[130px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">دسترسی</label>
+      <select name="visibility" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        {% for k, v in visibility_labels.items() %}
+          <option value="{{ k }}" {% if visibility == k %}selected{% endif %}>{{ v.split('—')[0].strip() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[150px]">
+      <label class="text-xs font-bold text-slate-400 mb-1 block">پروژه</label>
+      <select name="project_id" class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm">
+        <option value="">همه</option>
+        {% for p in projects %}
+          <option value="{{ p.id }}" {% if project_id == p.id %}selected{% endif %}>{{ p.project_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <label class="flex items-center gap-2 text-sm cursor-pointer pb-2">
+      <input type="checkbox" name="mine" value="1" {% if mine %}checked{% endif %} class="rounded">
+      فقط مال من
+    </label>
+    <button type="submit" class="px-5 py-2 bg-brand-600 text-white rounded-xl text-sm font-bold hover:bg-brand-700">فیلتر</button>
+  </form>
+
+  <div class="grid gap-3">
+    {% for c in concerns %}
+    <a href="{{ url_for('concerns.detail', concern_id=c.id) }}"
+       class="block bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 hover:border-rose-300 dark:hover:border-rose-600 transition shadow-sm">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold
+              {% if c.priority == 'critical' %}bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400
+              {% elif c.priority == 'high' %}bg-orange-100 text-orange-700
+              {% elif c.priority == 'medium' %}bg-amber-100 text-amber-700
+              {% else %}bg-slate-100 text-slate-600{% endif %}">
+              {{ priority_labels.get(c.priority, c.priority) }}
+            </span>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              {{ status_labels.get(c.status, c.status) }}
+            </span>
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium text-slate-500 border border-slate-200 dark:border-slate-600">
+              <i class="fas fa-eye text-[9px] ml-1"></i> {{ visibility_labels.get(c.visibility, c.visibility).split('—')[0].strip() }}
+            </span>
+            {% if c.category %}
+            <span class="text-[10px] text-slate-400">{{ category_labels.get(c.category, c.category) }}</span>
+            {% endif %}
+          </div>
+          <h3 class="font-black text-slate-800 dark:text-white truncate">{{ c.title }}</h3>
+          <p class="text-xs text-slate-500 mt-1">
+            {% if c.project %}{{ c.project.project_name }} · {% endif %}
+            {{ c.raised_by.full_name or c.raised_by.email if c.raised_by else '—' }}
+            {% if c.assignee %} · مسئول: {{ c.assignee.full_name or c.assignee.email }}{% endif %}
+          </p>
+        </div>
+        <div class="text-xs text-slate-400 whitespace-nowrap">{{ c.updated_at.strftime('%Y-%m-%d') if c.updated_at else '' }}</div>
+      </div>
+      {% if c.description %}
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-2">{{ c.description[:200] }}{% if c.description|length > 200 %}...{% endif %}</p>
+      {% endif %}
+    </a>
+    {% else %}
+    <div class="text-center py-16 text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+      <i class="fas fa-exclamation-triangle text-4xl mb-3 opacity-40"></i>
+      <p>کانسرنی یافت نشد.</p>
+      <a href="{{ url_for('concerns.create') }}" class="inline-block mt-4 text-rose-600 font-bold hover:underline">اولین کانسرن را ثبت کنید</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if pagination and pagination.pages > 1 %}
+  <div class="flex justify-center gap-2">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for('concerns.index', page=pagination.prev_num, q=q, status=status, priority=priority, category=category, visibility=visibility, project_id=project_id, mine=1 if mine else none) }}" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-sm">قبلی</a>
+    {% endif %}
+    <span class="px-3 py-1 text-sm text-slate-500">صفحه {{ pagination.page }} از {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+      <a href="{{ url_for('concerns.index', page=pagination.next_num, q=q, status=status, priority=priority, category=category, visibility=visibility, project_id=project_id, mine=1 if mine else none) }}" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-sm">بعدی</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
