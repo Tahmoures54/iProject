@@ -111,6 +111,9 @@
           <a href="{{ url_for('daily_reports.index') }}" class="nav-link-modern">
             <i class="fa-solid fa-clipboard-list text-xs"></i> گزارش روزانه
           </a>
+          <a href="{{ url_for('concerns.index') }}" class="nav-link-modern">
+            <i class="fa-solid fa-triangle-exclamation text-xs"></i> کانسرن‌ها
+          </a>
           {% endif %}
           {% if is_admin %}
             <a href="{{ url_for('users.users') }}" class="nav-link-modern">
