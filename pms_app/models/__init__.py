@@ -16,6 +16,7 @@ from .report import Report  # noqa: F401
 from .sms_log import SMSLog  # noqa: F401
 from .subscription import Subscription  # noqa: F401
 from .action_item import ActionItem  # noqa: F401
+from .daily_report import DailyReport, DailyReportHistory  # noqa: F401
 
 __all__ = [
     "user_roles",
@@ -31,4 +32,6 @@ __all__ = [
     "SMSLog",
     "Subscription",
     "ActionItem",
+    "DailyReport",
+    "DailyReportHistory",
 ]
