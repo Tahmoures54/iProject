@@ -39,6 +39,7 @@ _DEFAULT_ROLES: list[dict] = [
             "items.read,items.create,items.write,items.delete,"
             "reports.read,reports.create,reports.update,reports.delete,"
             "daily_reports.read,daily_reports.create,daily_reports.update,daily_reports.approve,daily_reports.delete,"
+            "concerns.read,concerns.create,concerns.update,concerns.manage,concerns.delete,"
             "users.read,users.create,users.update,users.delete,users.manage,"
             "roles.read,roles.manage,"
             "billing.read,billing.manage"
@@ -50,34 +51,40 @@ _DEFAULT_ROLES: list[dict] = [
         "description": "کاربر عادی شرکت با دسترسی پایه",
         "permissions": (
             "projects.read,items.read,contracts.read,reports.read,"
-            "daily_reports.read,daily_reports.create"
+            "daily_reports.read,daily_reports.create,"
+            "concerns.read,concerns.create"
         ),
     },
     {
         "name": "manager",
         "title": "مدیر پروژه/تیم",
-        "description": "مدیریت پروژه‌ها و قراردادها + تأیید گزارش روزانه",
+        "description": "مدیریت پروژه‌ها + تأیید گزارش روزانه + مدیریت کانسرن",
         "permissions": (
             "projects.read,projects.create,projects.write,projects.update,"
             "contracts.read,contracts.create,contracts.write,"
             "items.read,items.create,items.write,"
             "reports.read,"
-            "daily_reports.read,daily_reports.create,daily_reports.update,daily_reports.approve"
+            "daily_reports.read,daily_reports.create,daily_reports.update,daily_reports.approve,"
+            "concerns.read,concerns.create,concerns.update,concerns.manage"
         ),
     },
     {
         "name": "viewer",
         "title": "مشاهده‌گر",
         "description": "فقط مشاهده",
-        "permissions": "projects.read,contracts.read,items.read,reports.read,daily_reports.read",
+        "permissions": (
+            "projects.read,contracts.read,items.read,reports.read,"
+            "daily_reports.read,concerns.read"
+        ),
     },
     {
         "name": "contractor",
         "title": "پیمانکار",
-        "description": "پیمانکار با دسترسی محدود + ثبت گزارش روزانه",
+        "description": "پیمانکار + گزارش روزانه + ثبت کانسرن",
         "permissions": (
             "projects.read,items.read,items.write,"
-            "daily_reports.read,daily_reports.create,daily_reports.update"
+            "daily_reports.read,daily_reports.create,daily_reports.update,"
+            "concerns.read,concerns.create"
         ),
     },
 ]
@@ -195,8 +202,6 @@ def ensure_rbac_seed(
     - update_existing: if True, update title/description for existing roles
     - force_update_permissions: if True, overwrite permissions on existing roles
     """
-    # ✅ FIX: Role داخل models/user.py نیست؛ داخل models/role.py است.
-    # همچنین این import را داخل تابع گذاشتیم تا از مشکلات import-order/circular جلوگیری شود.
     from pms_app.models.role import Role
 
     try:
