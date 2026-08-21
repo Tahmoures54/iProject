@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | iProject{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6" dir="rtl">
+  <div>
+    <nav class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+      <a href="{{ url_for('daily_reports.project_list', project_id=project.id) }}" class="hover:text-brand-600">گزارش‌های روزانه</a>
+      <i class="fas fa-chevron-left text-[8px]"></i>
+      <span class="text-brand-600">{{ title }}</span>
+    </nav>
+    <h1 class="text-2xl font-black text-slate-800 dark:text-white">{{ title }}</h1>
+    <p class="text-sm text-slate-500 mt-1">{{ project.project_name }} ({{ project.project_code }})</p>
+  </div>
+
+  <form method="post" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 p-6 sm:p-8 space-y-6 shadow-sm">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.report_date.label.text }} *</label>
+        {{ form.report_date(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+        {% for e in form.report_date.errors %}<p class="text-xs text-rose-500 mt-1">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.weather.label.text }}</label>
+        {{ form.weather(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.temperature_min.label.text }}</label>
+        {{ form.temperature_min(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.temperature_max.label.text }}</label>
+        {{ form.temperature_max(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+      <h3 class="font-black text-slate-800 dark:text-white mb-3 flex items-center gap-2"><i class="fas fa-users text-brand-500"></i> نیروی انسانی</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.manpower_total.label.text }}</label>
+          {{ form.manpower_total(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.manpower_details_raw.label.text }}</label>
+          {{ form.manpower_details_raw(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm font-mono") }}
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+      <h3 class="font-black text-slate-800 dark:text-white mb-3 flex items-center gap-2"><i class="fas fa-truck text-amber-500"></i> ماشین‌آلات</h3>
+      {{ form.equipment_details_raw(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm font-mono") }}
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+      <h3 class="font-black text-slate-800 dark:text-white mb-3 flex items-center gap-2"><i class="fas fa-hammer text-emerald-500"></i> کارهای انجام‌شده</h3>
+      {{ form.work_performed(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+      <h3 class="font-black text-slate-800 dark:text-white mb-3 flex items-center gap-2"><i class="fas fa-chart-line text-indigo-500"></i> پیشرفت آیتم‌ها (پیشنهادی)</h3>
+      <p class="text-xs text-slate-400 mb-2">فقط پس از تأیید نهایی مدیران روی سیستم اعمال می‌شود.</p>
+      {{ form.progress_updates_raw(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm font-mono") }}
+    </div>
+
+    <div class="border-t border-slate-100 dark:border-slate-700 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.issues_delays.label.text }}</label>
+        {{ form.issues_delays(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.hse_incidents.label.text }}</label>
+        {{ form.hse_incidents(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.hse_observations.label.text }}</label>
+        {{ form.hse_observations(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.near_miss_count.label.text }}</label>
+        {{ form.near_miss_count(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.visitors_meetings.label.text }}</label>
+        {{ form.visitors_meetings(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ form.notes.label.text }}</label>
+        {{ form.notes(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 px-3 py-2.5 text-sm") }}
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+      <button type="submit" name="action" value="save"
+              class="px-6 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-600 font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+        ذخیره پیش‌نویس
+      </button>
+      <button type="submit" name="action" value="submit"
+              class="px-6 py-2.5 rounded-2xl bg-brand-600 text-white font-bold text-sm hover:bg-brand-700 shadow-lg shadow-brand-500/20">
+        <i class="fas fa-paper-plane ml-1"></i> ارسال برای تأیید
+      </button>
+      <a href="{{ url_for('daily_reports.project_list', project_id=project.id) }}" class="px-6 py-2.5 rounded-2xl text-sm text-slate-500 hover:text-slate-700">انصراف</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

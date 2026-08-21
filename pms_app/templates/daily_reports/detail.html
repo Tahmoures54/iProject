@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}گزارش {{ report.report_date }} | iProject{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6" dir="rtl">
+  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+    <div>
+      <nav class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+        <a href="{{ url_for('daily_reports.project_list', project_id=report.project_id) }}" class="hover:text-brand-600">گزارش‌های روزانه</a>
+        <i class="fas fa-chevron-left text-[8px]"></i>
+        <span class="text-brand-600">{{ report.report_date }}</span>
+      </nav>
+      <h1 class="text-2xl font-black text-slate-800 dark:text-white">گزارش روزانه {{ report.report_date }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ report.project.project_name }} · {{ report.submitted_by.full_name or report.submitted_by.email if report.submitted_by else '—' }}</p>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <span class="inline-flex px-3 py-1.5 rounded-full text-xs font-bold
+        {% if report.status == 'approved' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400
+        {% elif report.status == 'rejected' %}bg-rose-100 text-rose-700
+        {% elif report.status in ('submitted', 'under_review') %}bg-amber-100 text-amber-700
+        {% elif report.status == 'needs_revision' %}bg-orange-100 text-orange-700
+        {% else %}bg-slate-100 text-slate-600{% endif %}">
+        {{ status_labels.get(report.status, report.status) }}
+      </span>
+      {% if can_edit %}
+      <a href="{{ url_for('daily_reports.edit', report_id=report.id) }}" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-sm font-bold hover:bg-slate-50">ویرایش</a>
+      {% if report.status == 'draft' or report.status == 'needs_revision' %}
+      <form method="post" action="{{ url_for('daily_reports.submit', report_id=report.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-bold hover:bg-brand-700">ارسال برای تأیید</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {# محتوای گزارش #}
+  <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 border-b border-slate-100 dark:border-slate-700">
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase">هوا</p>
+        <p class="font-bold text-slate-800 dark:text-white">{{ report.weather or '—' }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase">دما</p>
+        <p class="font-bold text-slate-800 dark:text-white">
+          {% if report.temperature_min is not none or report.temperature_max is not none %}
+            {{ report.temperature_min or '?' }}° / {{ report.temperature_max or '?' }}°
+          {% else %}—{% endif %}
+        </p>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase">نیروی انسانی</p>
+        <p class="font-bold text-slate-800 dark:text-white">{{ report.manpower_total or 0 }} نفر</p>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-slate-400 uppercase">Near Miss</p>
+        <p class="font-bold text-slate-800 dark:text-white">{{ report.near_miss_count or 0 }}</p>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-5">
+      {% if report.manpower_details %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">جزئیات نیروی انسانی</h4>
+        <div class="flex flex-wrap gap-2">
+          {% for m in report.manpower_details %}
+          <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-medium">{{ m.role }}: {{ m.count }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if report.equipment_details %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">ماشین‌آلات</h4>
+        <div class="flex flex-wrap gap-2">
+          {% for e in report.equipment_details %}
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-xs font-medium">{{ e.name }} ×{{ e.count }} ({{ e.hours }}h)</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if report.work_performed %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">کارهای انجام‌شده</h4>
+        <p class="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">{{ report.work_performed }}</p>
+      </div>
+      {% endif %}
+
+      {% if report.progress_updates %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">پیشرفت پیشنهادی آیتم‌ها {% if report.progress_applied %}<span class="text-emerald-600">(اعمال‌شده)</span>{% endif %}</h4>
+        <ul class="space-y-1 text-sm">
+          {% for u in report.progress_updates %}
+          <li class="flex gap-2">
+            <span class="font-mono text-brand-600">#{{ u.contract_item_id }}</span>
+            <span>{{ u.progress_percent }}%</span>
+            {% if u.quantity_done %}<span>مقدار: {{ u.quantity_done }}</span>{% endif %}
+            {% if u.notes %}<span class="text-slate-500">— {{ u.notes }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if report.issues_delays %}
+      <div>
+        <h4 class="text-xs font-bold text-rose-500 mb-2">مشکلات و تأخیرات</h4>
+        <p class="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">{{ report.issues_delays }}</p>
+      </div>
+      {% endif %}
+
+      {% if report.hse_incidents or report.hse_observations %}
+      <div class="grid sm:grid-cols-2 gap-4">
+        {% if report.hse_incidents %}
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 mb-2">حوادث ایمنی</h4>
+          <p class="text-sm whitespace-pre-line">{{ report.hse_incidents }}</p>
+        </div>
+        {% endif %}
+        {% if report.hse_observations %}
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 mb-2">مشاهدات HSE</h4>
+          <p class="text-sm whitespace-pre-line">{{ report.hse_observations }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if report.visitors_meetings %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">بازدید / جلسات</h4>
+        <p class="text-sm whitespace-pre-line">{{ report.visitors_meetings }}</p>
+      </div>
+      {% endif %}
+
+      {% if report.notes %}
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 mb-2">یادداشت</h4>
+        <p class="text-sm whitespace-pre-line">{{ report.notes }}</p>
+      </div>
+      {% endif %}
+
+      {% if report.review_comment %}
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700">
+        <h4 class="text-xs font-bold text-slate-400 mb-1">نظر بررسی‌کننده</h4>
+        <p class="text-sm">{{ report.review_comment }}</p>
+        {% if report.reviewed_by %}
+        <p class="text-xs text-slate-400 mt-2">— {{ report.reviewed_by.full_name or report.reviewed_by.email }} · {{ report.reviewed_at }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# فرم تأیید / رد #}
+  {% if can_approve and review_form %}
+  <div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-3xl p-6">
+    <h3 class="font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+      <i class="fas fa-clipboard-check text-amber-600"></i> بررسی و تصمیم‌گیری
+    </h3>
+    <form method="post" action="{{ url_for('daily_reports.review', report_id=report.id) }}" class="space-y-4">
+      {{ review_form.hidden_tag() }}
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1.5">تصمیم</label>
+          {{ review_form.action(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm") }}
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1.5">اعمال پیشرفت</label>
+          {{ review_form.apply_progress(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm") }}
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1.5">توضیحات</label>
+        {{ review_form.comment(class="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm") }}
+      </div>
+      <button type="submit" class="px-6 py-2.5 bg-brand-600 text-white font-bold text-sm rounded-2xl hover:bg-brand-700">ثبت تصمیم</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {# تاریخچه #}
+  {% if history %}
+  <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 p-6">
+    <h3 class="font-black text-slate-800 dark:text-white mb-4">تاریخچه تغییرات</h3>
+    <ol class="relative border-r border-slate-200 dark:border-slate-700 space-y-4 pr-6">
+      {% for h in history %}
+      <li class="relative">
+        <span class="absolute -right-[9px] top-1.5 w-4 h-4 rounded-full bg-brand-500 border-2 border-white dark:border-slate-800"></span>
+        <p class="text-sm font-bold text-slate-800 dark:text-white">{{ h.action }} → {{ status_labels.get(h.to_status, h.to_status) }}</p>
+        <p class="text-xs text-slate-500">{{ h.user.full_name or h.user.email if h.user else 'سیستم' }} · {{ h.created_at }}</p>
+        {% if h.comment %}<p class="text-sm text-slate-600 dark:text-slate-300 mt-1">{{ h.comment }}</p>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
