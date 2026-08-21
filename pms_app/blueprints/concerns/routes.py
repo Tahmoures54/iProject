@@ -13,6 +13,12 @@ from pms_app.models.concern import Concern, ConcernComment, ConcernHistory
 from pms_app.models.project import Project
 from pms_app.models.project_membership import ProjectMembership
 from pms_app.models.user import User
+from pms_app.utils.notify import (
+    notify_concern_assigned,
+    notify_concern_created,
+    notify_concern_escalated,
+    notify_concern_status,
+)
 from pms_app.utils.security import ensure_rbac_seed
 
 from . import bp
@@ -63,7 +69,6 @@ def _assignee_choices(project_id: Optional[int] = None) -> List[Tuple[int, str]]
 
 
 def _filter_visible(query):
-    """فیلتر کانسرن‌هایی که کاربر فعلی حق دیدن دارد."""
     if current_user.is_owner:
         return query
     cid = _company_id()
@@ -74,7 +79,6 @@ def _filter_visible(query):
         return query
 
     uid = current_user.id
-    # عضویت در پروژه‌ها
     member_project_ids = [
         m.project_id
         for m in ProjectMembership.query.filter_by(user_id=uid, status="active").all()
@@ -192,7 +196,6 @@ def create():
     ]
     form.assignee_id.choices = _assignee_choices()
 
-    # پیش‌فرض از query
     if request.method == "GET":
         pid = request.args.get("project_id", type=int)
         if pid:
@@ -223,7 +226,6 @@ def create():
         if assignee_id == 0:
             assignee_id = None
 
-        # اگر visibility=project ولی پروژه‌ای انتخاب نشده → company
         visibility = form.visibility.data or "project"
         if visibility == "project" and not project_id:
             visibility = "company"
@@ -253,6 +255,9 @@ def create():
                 note="ثبت کانسرن جدید",
             )
             db.session.commit()
+            notify_concern_created(concern)
+            if assignee_id:
+                notify_concern_assigned(concern)
             flash("کانسرن با موفقیت ثبت شد.", "success")
             return redirect(url_for("concerns.detail", concern_id=concern.id))
         except SQLAlchemyError:
@@ -271,7 +276,6 @@ def create():
 def detail(concern_id: int):
     concern = get_concern_or_403(concern_id)
     comments = concern.comments.order_by(ConcernComment.created_at.asc()).all()
-    # فیلتر نظرات داخلی برای غیرمدیران
     is_manager_like = (
         current_user.is_owner
         or current_user.is_company_admin
@@ -325,6 +329,7 @@ def edit(concern_id: int):
         project_id = form.project_id.data or None
         if project_id == 0:
             project_id = None
+        old_assignee = concern.assignee_id
         assignee_id = form.assignee_id.data or None
         if assignee_id == 0:
             assignee_id = None
@@ -356,6 +361,8 @@ def edit(concern_id: int):
                 note="ویرایش کانسرن",
             )
             db.session.commit()
+            if assignee_id and assignee_id != old_assignee:
+                notify_concern_assigned(concern)
             flash("کانسرن به‌روز شد.", "success")
             return redirect(url_for("concerns.detail", concern_id=concern.id))
         except SQLAlchemyError:
@@ -379,7 +386,6 @@ def add_comment(concern_id: int):
         return redirect(url_for("concerns.detail", concern_id=concern_id))
 
     is_internal = bool(form.is_internal.data)
-    # فقط مدیران می‌توانند نظر داخلی بگذارند
     if is_internal and not (
         current_user.is_owner
         or current_user.is_company_admin
@@ -431,6 +437,7 @@ def change_status(concern_id: int):
         new_assignee = None
 
     try:
+        assigned_changed = False
         if new_assignee is not None and new_assignee != concern.assignee_id:
             concern.assignee_id = new_assignee
             concern.add_history(
@@ -440,6 +447,7 @@ def change_status(concern_id: int):
                 to_status=concern.status,
                 note=f"تغییر مسئول به #{new_assignee}",
             )
+            assigned_changed = True
 
         if action == "acknowledge":
             concern.acknowledge(current_user.id)
@@ -458,6 +466,14 @@ def change_status(concern_id: int):
             return redirect(url_for("concerns.detail", concern_id=concern_id))
 
         db.session.commit()
+
+        if assigned_changed:
+            notify_concern_assigned(concern)
+        if action == "escalate":
+            notify_concern_escalated(concern)
+        if action in ("resolve", "close", "reopen"):
+            notify_concern_status(concern, action=action)
+
         flash("وضعیت کانسرن به‌روز شد.", "success")
     except ValueError as e:
         db.session.rollback()
@@ -475,10 +491,7 @@ def delete(concern_id: int):
     if not (
         current_user.is_owner
         or current_user.is_company_admin
-        or (
-            concern.raised_by_id == current_user.id
-            and concern.status == "open"
-        )
+        or (concern.raised_by_id == current_user.id and concern.status == "open")
     ):
         flash("مجوز حذف ندارید.", "danger")
         return redirect(url_for("concerns.detail", concern_id=concern_id))
