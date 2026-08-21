@@ -1,8 +1,6 @@
 # Path: pms_app/blueprints/daily_reports/routes.py
 from __future__ import annotations
 
-from datetime import date, datetime
-from functools import wraps
 from typing import List, Optional
 
 from flask import (
@@ -22,6 +20,7 @@ from pms_app.extensions import db
 from pms_app.models.daily_report import DailyReport, DailyReportHistory
 from pms_app.models.project import Project
 from pms_app.models.project_membership import ProjectMembership
+from pms_app.utils.notify import notify_daily_report_decision, notify_daily_report_submitted
 from pms_app.utils.security import ensure_rbac_seed
 
 from . import bp
@@ -37,7 +36,6 @@ def _company_id() -> Optional[int]:
 
 
 def _parse_lines_to_list(raw: str, expected_parts: int = 2) -> List[dict]:
-    """تبدیل متن چندخطی به لیست دیکشنری."""
     result = []
     if not raw:
         return result
@@ -95,7 +93,6 @@ def _list_to_raw(items: Optional[list], keys: List[str]) -> str:
 
 
 def can_manage_project_reports(project: Project) -> bool:
-    """آیا کاربر می‌تواند گزارش‌های این پروژه را تأیید کند؟"""
     if current_user.is_owner or current_user.is_company_admin:
         return True
     if current_user.has_permission("daily_reports.approve"):
@@ -146,7 +143,6 @@ def scope_reports_query(base_query):
     base_query = base_query.filter(DailyReport.company_id == cid)
     if current_user.is_company_admin:
         return base_query
-    # کاربران عادی: فقط پروژه‌هایی که عضو هستند + گزارش‌های خودشان
     return (
         base_query.join(ProjectMembership, ProjectMembership.project_id == DailyReport.project_id)
         .filter(ProjectMembership.user_id == current_user.id)
@@ -165,7 +161,6 @@ def _guard():
 
 @bp.route("/")
 def index():
-    """لیست گزارش‌های روزانه (با فیلتر)."""
     q = request.args.get("q", "").strip()
     status = request.args.get("status", "").strip()
     project_id = request.args.get("project_id", type=int)
@@ -192,7 +187,6 @@ def index():
         DailyReport.report_date.desc(), DailyReport.id.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    # پروژه‌های در دسترس برای فیلتر
     projects = []
     if current_user.is_owner:
         projects = Project.query.filter_by(status="active").order_by(Project.project_name).limit(100).all()
@@ -281,11 +275,12 @@ def create(project_id: int):
                 to_status="draft",
                 comment="ایجاد گزارش روزانه",
             )
-            action = (form.action.data or "save").strip().lower()
+            action = (form.action.data or request.form.get("action") or "save").strip().lower()
             if action == "submit":
                 report.submit(current_user.id)
             db.session.commit()
             if action == "submit":
+                notify_daily_report_submitted(report)
                 flash("گزارش روزانه با موفقیت ثبت و برای تأیید ارسال شد.", "success")
             else:
                 flash("پیش‌نویس گزارش ذخیره شد.", "success")
@@ -368,7 +363,7 @@ def edit(report_id: int):
         report.visitors_meetings = form.visitors_meetings.data or None
         report.notes = form.notes.data or None
 
-        action = (form.action.data or "save").strip().lower()
+        action = (form.action.data or request.form.get("action") or "save").strip().lower()
         try:
             if action == "submit":
                 report.submit(current_user.id)
@@ -383,6 +378,8 @@ def edit(report_id: int):
                 )
                 flash("گزارش ذخیره شد.", "success")
             db.session.commit()
+            if action == "submit":
+                notify_daily_report_submitted(report)
             return redirect(url_for("daily_reports.detail", report_id=report.id))
         except ValueError as e:
             db.session.rollback()
@@ -433,6 +430,7 @@ def review(report_id: int):
             flash("عملیات نامعتبر.", "danger")
             return redirect(url_for("daily_reports.detail", report_id=report_id))
         db.session.commit()
+        notify_daily_report_decision(report, decision=action)
     except ValueError as e:
         db.session.rollback()
         flash(str(e), "danger")
@@ -454,6 +452,7 @@ def submit(report_id: int):
     try:
         report.submit(current_user.id)
         db.session.commit()
+        notify_daily_report_submitted(report)
         flash("گزارش برای تأیید ارسال شد.", "success")
     except ValueError as e:
         db.session.rollback()
