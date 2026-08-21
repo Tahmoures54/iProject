@@ -38,6 +38,7 @@ _DEFAULT_ROLES: list[dict] = [
             "contracts.read,contracts.create,contracts.write,contracts.update,contracts.delete,"
             "items.read,items.create,items.write,items.delete,"
             "reports.read,reports.create,reports.update,reports.delete,"
+            "daily_reports.read,daily_reports.create,daily_reports.update,daily_reports.approve,daily_reports.delete,"
             "users.read,users.create,users.update,users.delete,users.manage,"
             "roles.read,roles.manage,"
             "billing.read,billing.manage"
@@ -47,30 +48,37 @@ _DEFAULT_ROLES: list[dict] = [
         "name": "company_user",
         "title": "کاربر شرکت",
         "description": "کاربر عادی شرکت با دسترسی پایه",
-        "permissions": "projects.read,items.read,contracts.read,reports.read",
+        "permissions": (
+            "projects.read,items.read,contracts.read,reports.read,"
+            "daily_reports.read,daily_reports.create"
+        ),
     },
     {
         "name": "manager",
         "title": "مدیر پروژه/تیم",
-        "description": "مدیریت پروژه‌ها و قراردادها",
+        "description": "مدیریت پروژه‌ها و قراردادها + تأیید گزارش روزانه",
         "permissions": (
             "projects.read,projects.create,projects.write,projects.update,"
             "contracts.read,contracts.create,contracts.write,"
             "items.read,items.create,items.write,"
-            "reports.read"
+            "reports.read,"
+            "daily_reports.read,daily_reports.create,daily_reports.update,daily_reports.approve"
         ),
     },
     {
         "name": "viewer",
         "title": "مشاهده‌گر",
         "description": "فقط مشاهده",
-        "permissions": "projects.read,contracts.read,items.read,reports.read",
+        "permissions": "projects.read,contracts.read,items.read,reports.read,daily_reports.read",
     },
     {
         "name": "contractor",
         "title": "پیمانکار",
-        "description": "پیمانکار با دسترسی محدود به پروژه(ها)ی مشخص",
-        "permissions": "projects.read,items.read,items.write",
+        "description": "پیمانکار با دسترسی محدود + ثبت گزارش روزانه",
+        "permissions": (
+            "projects.read,items.read,items.write,"
+            "daily_reports.read,daily_reports.create,daily_reports.update"
+        ),
     },
 ]
 
