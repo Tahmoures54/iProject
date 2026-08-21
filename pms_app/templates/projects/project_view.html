@@ -32,6 +32,11 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
+                <a href="{{ url_for('daily_reports.project_list', project_id=project.id) }}"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 shadow-sm">
+                    <i class="fas fa-clipboard-list text-orange-500"></i>
+                    گزارش روزانه
+                </a>
                 <a href="{{ url_for('projects.schedule', project_id=project.id) }}"
                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold text-sm rounded-2xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 shadow-sm">
                     <i class="fas fa-calendar-alt text-blue-500"></i>
@@ -172,6 +177,9 @@
                 <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                     <h4 class="font-black text-gray-800 dark:text-white mb-4">دسترسی سریع</h4>
                     <div class="space-y-2">
+                        <a href="{{ url_for('daily_reports.project_list', project_id=project.id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 text-sm font-bold text-gray-700 dark:text-gray-200">
+                            <i class="fas fa-clipboard-list text-orange-500 w-5"></i> گزارش روزانه
+                        </a>
                         <a href="{{ url_for('projects.schedule', project_id=project.id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-gray-700/50 text-sm font-bold text-gray-700 dark:text-gray-200">
                             <i class="fas fa-calendar-alt text-blue-500 w-5"></i> برنامه زمان‌بندی
                         </a>
